@@ -28,24 +28,29 @@ final class NetworkService: NetworkServiceProtocol {
     }
     
     func fetchImage(path: String) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuation in
+        print("Fetching image from path: \(path)")
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<URL, Error>) in
             storage.reference().child(path).downloadURL { url, error in
                 if let error = error {
+                    print("Error fetching image URL: \(error.localizedDescription)")
                     continuation.resume(throwing: NetworkError.serverError(error.localizedDescription))
                     return
                 }
                 
                 guard let url = url else {
+                    print("Invalid URL received from Firebase")
                     continuation.resume(throwing: NetworkError.invalidURL)
                     return
                 }
                 
+                print("Successfully fetched image URL: \(url)")
                 continuation.resume(returning: url)
             }
         }
     }
     
     func fetchProducts() async throws -> [Product] {
+        print("Fetching products")
         return [
             Product(
                 name: "Turtleneck Sweater",

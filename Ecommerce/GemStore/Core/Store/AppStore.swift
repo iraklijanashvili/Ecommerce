@@ -38,6 +38,8 @@ final class AppStore: ObservableObject {
         state.error = nil
         
         do {
+            print("Starting to fetch images and products")
+            
             async let bannerURL = networkService.fetchImage(path: "images/HomeBanner.png")
             async let newCollectionURL = networkService.fetchImage(path: "images/HomeBanner1.png")
             async let topCollectionURL = networkService.fetchImage(path: "images/HomeBanner2.png")
@@ -52,6 +54,8 @@ final class AppStore: ObservableObject {
                 products
             )
             
+            print("Successfully fetched all images and products")
+            
             state.bannerImageURL = banner.absoluteString
             state.newCollectionImageURL = newCollection.absoluteString
             state.topCollectionImageURL = topCollection.absoluteString
@@ -61,8 +65,14 @@ final class AppStore: ObservableObject {
             state.recommendedProducts = allProducts.filter { $0.section == .recommended }
             state.isInitialized = true
             
+            print("State updated with new data")
+            print("Featured products count: \(state.featuredProducts.count)")
+            print("Recommended products count: \(state.recommendedProducts.count)")
+            
         } catch {
+            print("Error initializing store: \(error.localizedDescription)")
             state.error = error
+            state.isInitialized = false
         }
         
         state.isLoading = false

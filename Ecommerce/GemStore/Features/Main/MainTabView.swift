@@ -6,35 +6,40 @@
 //
 
 
-
 import SwiftUI
 
 struct MainTabView: View {
+    @State private var selectedTab = 0
+    
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             HomeView()
                 .tabItem {
                     Image(systemName: "house.fill")
                     Text("Home")
                 }
-            
-            Text("Search")
-                .tabItem {
-                    Image(systemName: "magnifyingglass")
-                    Text("Search")
-                }
+                .tag(0)
             
             Text("Cart")
                 .tabItem {
                     Image(systemName: "cart.fill")
                     Text("Cart")
                 }
+                .tag(1)
             
-            Text("Profile")
+            Text("Favorites")
+                .tabItem {
+                    Image(systemName: "heart.fill")
+                    Text("Favorites")
+                }
+                .tag(2)
+            
+            ProfileView()
                 .tabItem {
                     Image(systemName: "person.fill")
                     Text("Profile")
                 }
+                .tag(3)
         }
     }
-} 
+}
