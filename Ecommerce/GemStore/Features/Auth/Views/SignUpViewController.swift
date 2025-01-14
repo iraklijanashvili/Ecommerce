@@ -97,29 +97,36 @@ class SignUpViewController: UIViewController {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 20
-        stackView.distribution = .fillEqually
+        stackView.distribution = .fill
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
     }()
     
     private let googleButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "google"), for: .normal)
         button.backgroundColor = .white
         button.layer.cornerRadius = 25
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.lightGray.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
-    private let facebookButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "facebook"), for: .normal)
-        button.backgroundColor = .white
-        button.layer.cornerRadius = 25
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.lightGray.cgColor
-        return button
+    private let googleIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "GoogleIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let googleSignInLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Sign in with Google"
+        label.textColor = .black
+        label.font = .systemFont(ofSize: 14)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
     
     private let loginLabel: UILabel = {
@@ -128,6 +135,13 @@ class SignUpViewController: UIViewController {
         label.textColor = .black
         label.textAlignment = .center
         label.isUserInteractionEnabled = true
+        
+        let text = label.text ?? ""
+        let attributedString = NSMutableAttributedString(string: text)
+        let range = (text as NSString).range(of: "Log In")
+        attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        label.attributedText = attributedString
+        
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -172,8 +186,8 @@ class SignUpViewController: UIViewController {
         view.addSubview(loginLabel)
         
         socialButtonsStackView.addArrangedSubview(googleButton)
-        socialButtonsStackView.addArrangedSubview(facebookButton)
         
+        setupGoogleButton()
         setupConstraints()
         setupTextFieldsUnderlines()
     }
@@ -216,16 +230,15 @@ class SignUpViewController: UIViewController {
             confirmPasswordTextField.heightAnchor.constraint(equalToConstant: 44),
             
             signUpButton.topAnchor.constraint(equalTo: confirmPasswordTextField.bottomAnchor, constant: 40),
-            signUpButton.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            signUpButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            signUpButton.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            signUpButton.widthAnchor.constraint(equalToConstant: 220),
             signUpButton.heightAnchor.constraint(equalToConstant: 50),
             
             orLabel.topAnchor.constraint(equalTo: signUpButton.bottomAnchor, constant: 20),
             orLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             
             socialButtonsStackView.topAnchor.constraint(equalTo: orLabel.bottomAnchor, constant: 20),
-            socialButtonsStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            socialButtonsStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            socialButtonsStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             socialButtonsStackView.heightAnchor.constraint(equalToConstant: 50),
             socialButtonsStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
             
@@ -304,6 +317,24 @@ class SignUpViewController: UIViewController {
         let loginVC = LoginViewController()
         loginVC.modalPresentationStyle = .fullScreen
         present(loginVC, animated: true)
+    }
+    
+    private func setupGoogleButton() {
+        googleButton.addSubview(googleIconImageView)
+        googleButton.addSubview(googleSignInLabel)
+        
+        NSLayoutConstraint.activate([
+            googleButton.heightAnchor.constraint(equalToConstant: 50),
+            googleButton.widthAnchor.constraint(equalToConstant: 220),
+            
+            googleIconImageView.leadingAnchor.constraint(equalTo: googleButton.leadingAnchor, constant: 20),
+            googleIconImageView.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
+            googleIconImageView.widthAnchor.constraint(equalToConstant: 24),
+            googleIconImageView.heightAnchor.constraint(equalToConstant: 24),
+            
+            googleSignInLabel.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
+            googleSignInLabel.centerXAnchor.constraint(equalTo: googleButton.centerXAnchor, constant: 10)
+        ])
     }
 }
 

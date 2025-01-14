@@ -41,6 +41,15 @@ class LoginViewController: UIViewController {
         return textField
     }()
     
+    private let forgotPasswordButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Forgot Password?", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 14)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     private let loginButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("LOG IN", for: .normal)
@@ -64,19 +73,36 @@ class LoginViewController: UIViewController {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 20
-        stackView.distribution = .fillEqually
+        stackView.distribution = .fill
         stackView.translatesAutoresizingMaskIntoConstraints = false
         return stackView
     }()
     
     private let googleButton: UIButton = {
         let button = UIButton(type: .system)
-        button.setImage(UIImage(named: "google"), for: .normal)
         button.backgroundColor = .white
         button.layer.cornerRadius = 25
         button.layer.borderWidth = 1
         button.layer.borderColor = UIColor.lightGray.cgColor
+        button.translatesAutoresizingMaskIntoConstraints = false
         return button
+    }()
+    
+    private let googleIconImageView: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(named: "GoogleIcon")
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private let googleSignInLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Sign in with Google"
+        label.textColor = .black
+        label.font = .systemFont(ofSize: 14)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }()
     
     private let signUpLabel: UILabel = {
@@ -84,6 +110,13 @@ class LoginViewController: UIViewController {
         label.text = "Don't have an account? Sign Up"
         label.textAlignment = .center
         label.isUserInteractionEnabled = true
+        
+        let text = label.text ?? ""
+        let attributedString = NSMutableAttributedString(string: text)
+        let range = (text as NSString).range(of: "Sign Up")
+        attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: range)
+        label.attributedText = attributedString
+        
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -138,6 +171,7 @@ class LoginViewController: UIViewController {
         view.addSubview(titleLabel)
         view.addSubview(emailTextField)
         view.addSubview(passwordTextField)
+        view.addSubview(forgotPasswordButton)
         view.addSubview(loginButton)
         view.addSubview(orLabel)
         view.addSubview(socialButtonsStackView)
@@ -145,6 +179,7 @@ class LoginViewController: UIViewController {
         
         socialButtonsStackView.addArrangedSubview(googleButton)
         
+        setupGoogleButton()
         setupConstraints()
         setupTextFieldsUnderlines()
     }
@@ -165,17 +200,19 @@ class LoginViewController: UIViewController {
             passwordTextField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             passwordTextField.heightAnchor.constraint(equalToConstant: 44),
             
-            loginButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 40),
-            loginButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            loginButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            forgotPasswordButton.topAnchor.constraint(equalTo: passwordTextField.bottomAnchor, constant: 10),
+            forgotPasswordButton.trailingAnchor.constraint(equalTo: passwordTextField.trailingAnchor),
+            
+            loginButton.topAnchor.constraint(equalTo: forgotPasswordButton.bottomAnchor, constant: 20),
+            loginButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            loginButton.widthAnchor.constraint(equalToConstant: 220),
             loginButton.heightAnchor.constraint(equalToConstant: 50),
             
             orLabel.topAnchor.constraint(equalTo: loginButton.bottomAnchor, constant: 20),
             orLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
             socialButtonsStackView.topAnchor.constraint(equalTo: orLabel.bottomAnchor, constant: 20),
-            socialButtonsStackView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            socialButtonsStackView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            socialButtonsStackView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             socialButtonsStackView.heightAnchor.constraint(equalToConstant: 50),
             
             signUpLabel.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20),
@@ -202,6 +239,7 @@ class LoginViewController: UIViewController {
     private func setupActions() {
         loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
         googleButton.addTarget(self, action: #selector(googleSignInTapped), for: .touchUpInside)
+        forgotPasswordButton.addTarget(self, action: #selector(forgotPasswordTapped), for: .touchUpInside)
         
         let signUpTapGesture = UITapGestureRecognizer(target: self, action: #selector(signUpLabelTapped))
         signUpLabel.addGestureRecognizer(signUpTapGesture)
@@ -217,6 +255,35 @@ class LoginViewController: UIViewController {
     
     @objc private func signUpLabelTapped() {
         dismiss(animated: true)
+    }
+    
+    @objc private func forgotPasswordTapped() {
+        guard let email = emailTextField.text, !email.isEmpty else {
+            let alert = UIAlertController(title: "Error", message: "Please enter your email address", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            present(alert, animated: true)
+            return
+        }
+        
+        viewModel.resetPassword(email: email)
+    }
+    
+    private func setupGoogleButton() {
+        googleButton.addSubview(googleIconImageView)
+        googleButton.addSubview(googleSignInLabel)
+        
+        NSLayoutConstraint.activate([
+            googleButton.heightAnchor.constraint(equalToConstant: 50),
+            googleButton.widthAnchor.constraint(equalToConstant: 220),
+            
+            googleIconImageView.leadingAnchor.constraint(equalTo: googleButton.leadingAnchor, constant: 20),
+            googleIconImageView.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
+            googleIconImageView.widthAnchor.constraint(equalToConstant: 24),
+            googleIconImageView.heightAnchor.constraint(equalToConstant: 24),
+            
+            googleSignInLabel.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
+            googleSignInLabel.centerXAnchor.constraint(equalTo: googleButton.centerXAnchor, constant: 10)
+        ])
     }
 }
 
@@ -234,6 +301,18 @@ extension LoginViewController: LoginViewModelDelegate {
             self.present(alert, animated: true)
         }
     }
+    
+    func didSendResetPasswordEmail() {
+        DispatchQueue.main.async {
+            let alert = UIAlertController(
+                title: "Success",
+                message: "Password reset instructions have been sent to your email",
+                preferredStyle: .alert
+            )
+            alert.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alert, animated: true)
+        }
+    }
 }
 
 struct LoginViewControllerRepresentable: UIViewControllerRepresentable {
@@ -244,4 +323,5 @@ struct LoginViewControllerRepresentable: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: LoginViewController, context: Context) {
     }
-} 
+}
+    

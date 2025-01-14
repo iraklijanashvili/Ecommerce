@@ -5,6 +5,7 @@ import UIKit
 protocol LoginViewModelDelegate: AnyObject {
     func didLoginSuccessfully()
     func didFailLogin(with error: Error)
+    func didSendResetPasswordEmail()
 }
 
 class LoginViewModel: ObservableObject {
@@ -65,5 +66,19 @@ class LoginViewModel: ObservableObject {
         }
         
         return true
+    }
+    
+    func resetPassword(email: String) {
+        isLoading = true
+        authService.resetPassword(email: email) { [weak self] result in
+            self?.isLoading = false
+            switch result {
+            case .success:
+                self?.delegate?.didSendResetPasswordEmail()
+            case .failure(let error):
+                self?.error = error
+                self?.delegate?.didFailLogin(with: error)
+            }
+        }
     }
 } 
