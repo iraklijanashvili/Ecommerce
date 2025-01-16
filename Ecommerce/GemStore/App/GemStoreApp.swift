@@ -60,7 +60,6 @@ class AuthenticationStateManager: ObservableObject {
 @main
 struct GemStoreApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject private var store = AppStore.shared
     @StateObject private var authManager = AuthenticationStateManager()
     
     var body: some Scene {
@@ -69,11 +68,7 @@ struct GemStoreApp: App {
                 Group {
                     if authManager.isAuthenticated {
                         MainTabView()
-                            .environmentObject(store)
                             .environmentObject(authManager)
-                            .task {
-                                await store.initialize()
-                            }
                     } else {
                         SignUpViewControllerRepresentable()
                     }

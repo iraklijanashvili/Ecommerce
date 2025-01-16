@@ -1,19 +1,19 @@
 //
-//  NewCollectionView.swift
+//  BannerView.swift
 //  Ecommerce
 //
-//  Created by Imac on 16.01.25.
+//  Created by Imac on 13.01.25.
 //
 
 
 import SwiftUI
 
-struct NewCollectionView: View {
-    let imageURL: String
+struct BannerView: View {
+    let banner: Banner
     
     var body: some View {
         GeometryReader { geometry in
-            AsyncImage(url: URL(string: imageURL)) { phase in
+            AsyncImage(url: URL(string: banner.imageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -21,7 +21,7 @@ struct NewCollectionView: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                case .failure:
+                case .failure(_):
                     Color.gray
                         .overlay(
                             Image(systemName: "photo")
@@ -32,9 +32,28 @@ struct NewCollectionView: View {
                 }
             }
             .frame(width: geometry.size.width, height: 200)
-            .clipped()
-            .cornerRadius(12)
+            .overlay(
+                BannerTitleOverlay(banner: banner),
+                alignment: .leading
+            )
         }
         .frame(height: 200)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+private struct BannerTitleOverlay: View {
+    let banner: Banner
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(banner.title)
+                .font(.title)
+            Text(banner.description)
+                .font(.subheadline)
+        }
+        .foregroundColor(.white)
+        .padding()
+        .shadow(radius: 2)
     }
 } 

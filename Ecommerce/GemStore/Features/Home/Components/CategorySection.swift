@@ -15,7 +15,7 @@ struct CategorySection: View {
         GeometryReader { geometry in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 20) {
-                    ForEach(categories, id: \.self) { category in
+                    ForEach(categories) { category in
                         NavigationLink(destination: CategoryProductsView(category: category)) {
                             CategoryItem(category: category)
                         }

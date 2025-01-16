@@ -8,17 +8,16 @@
 
 
 import UIKit
-import FirebaseAuth
-import GoogleSignIn
 import SwiftUI
+import Combine
 
 class LoginViewController: UIViewController {
-    
     private let titleLabel: UILabel = {
         let label = UILabel()
         label.text = "Welcome\nBack"
         label.font = .systemFont(ofSize: 40, weight: .bold)
         label.numberOfLines = 2
+        label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -28,6 +27,7 @@ class LoginViewController: UIViewController {
         textField.placeholder = "Email address"
         textField.borderStyle = .none
         textField.keyboardType = .emailAddress
+        textField.textColor = .black
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -37,6 +37,7 @@ class LoginViewController: UIViewController {
         textField.placeholder = "Password"
         textField.borderStyle = .none
         textField.isSecureTextEntry = true
+        textField.textColor = .black
         textField.translatesAutoresizingMaskIntoConstraints = false
         return textField
     }()
@@ -109,6 +110,7 @@ class LoginViewController: UIViewController {
         let label = UILabel()
         label.text = "Don't have an account? Sign Up"
         label.textAlignment = .center
+        label.textColor = .black
         label.isUserInteractionEnabled = true
         
         let text = label.text ?? ""
@@ -122,11 +124,11 @@ class LoginViewController: UIViewController {
     }()
     
     private let viewModel: LoginViewModel
+    private var cancellables = Set<AnyCancellable>()
     
     init(viewModel: LoginViewModel = LoginViewModel()) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
-        self.viewModel.delegate = self
     }
     
     required init?(coder: NSCoder) {
@@ -136,30 +138,12 @@ class LoginViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        setupActions()
         setupBindings()
-    }
-    
-    private func setupBindings() {
-        emailTextField.addTarget(self, action: #selector(emailTextFieldDidChange), for: .editingChanged)
-        passwordTextField.addTarget(self, action: #selector(passwordTextFieldDidChange), for: .editingChanged)
-    }
-    
-    @objc private func emailTextFieldDidChange() {
-        viewModel.email = emailTextField.text ?? ""
-    }
-    
-    @objc private func passwordTextFieldDidChange() {
-        viewModel.password = passwordTextField.text ?? ""
+        setupActions()
     }
     
     private func setupUI() {
         view.backgroundColor = .white
-        
-        titleLabel.textColor = .black
-        emailTextField.textColor = .black
-        passwordTextField.textColor = .black
-        signUpLabel.textColor = .black
         
         [emailTextField, passwordTextField].forEach { textField in
             textField.attributedPlaceholder = NSAttributedString(
@@ -182,6 +166,122 @@ class LoginViewController: UIViewController {
         setupGoogleButton()
         setupConstraints()
         setupTextFieldsUnderlines()
+    }
+    
+    private func setupBindings() {
+        emailTextField.textPublisher
+            .assign(to: \.email, on: viewModel)
+            .store(in: &cancellables)
+        
+        passwordTextField.textPublisher
+            .assign(to: \.password, on: viewModel)
+            .store(in: &cancellables)
+        
+        viewModel.$isLoading
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isLoading in
+                self?.loginButton.isEnabled = !isLoading
+                self?.loginButton.alpha = isLoading ? 0.5 : 1
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$error
+            .receive(on: DispatchQueue.main)
+            .compactMap { $0 }
+            .sink { [weak self] error in
+                self?.showError(error)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isEmailValid
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isValid in
+                self?.emailTextField.textColor = isValid ? .black : .red
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isPasswordValid
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isValid in
+                self?.passwordTextField.textColor = isValid ? .black : .red
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func setupActions() {
+        loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
+        googleButton.addTarget(self, action: #selector(googleSignInTapped), for: .touchUpInside)
+        forgotPasswordButton.addTarget(self, action: #selector(forgotPasswordTapped), for: .touchUpInside)
+        
+        let signUpTapGesture = UITapGestureRecognizer(target: self, action: #selector(signUpLabelTapped))
+        signUpLabel.addGestureRecognizer(signUpTapGesture)
+    }
+    
+    @objc private func loginButtonTapped() {
+        viewModel.login { [weak self] result in
+            switch result {
+            case .success:
+                self?.dismiss(animated: true)
+            case .failure(let error):
+                self?.showError(error)
+            }
+        }
+    }
+    
+    @objc private func googleSignInTapped() {
+        viewModel.signInWithGoogle(presenting: self) { [weak self] result in
+            switch result {
+            case .success:
+                self?.dismiss(animated: true)
+            case .failure(let error):
+                self?.showError(error)
+            }
+        }
+    }
+    
+    @objc private func signUpLabelTapped() {
+        dismiss(animated: true)
+    }
+    
+    @objc private func forgotPasswordTapped() {
+        viewModel.resetPassword(email: emailTextField.text ?? "") { [weak self] result in
+            switch result {
+            case .success:
+                self?.showAlert(title: "Success", message: "Password reset instructions have been sent to your email")
+            case .failure(let error):
+                self?.showError(error)
+            }
+        }
+    }
+    
+    private func showError(_ error: Error) {
+        let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default))
+        present(alert, animated: true)
+    }
+    
+    private func setupGoogleButton() {
+        googleButton.addSubview(googleIconImageView)
+        googleButton.addSubview(googleSignInLabel)
+        
+        NSLayoutConstraint.activate([
+            googleButton.heightAnchor.constraint(equalToConstant: 50),
+            googleButton.widthAnchor.constraint(equalToConstant: 220),
+            
+            googleIconImageView.leadingAnchor.constraint(equalTo: googleButton.leadingAnchor, constant: 20),
+            googleIconImageView.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
+            googleIconImageView.widthAnchor.constraint(equalToConstant: 24),
+            googleIconImageView.heightAnchor.constraint(equalToConstant: 24),
+            
+            googleSignInLabel.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
+            googleSignInLabel.centerXAnchor.constraint(equalTo: googleButton.centerXAnchor, constant: 10)
+        ])
     }
     
     private func setupConstraints() {
@@ -235,93 +335,14 @@ class LoginViewController: UIViewController {
             ])
         }
     }
-    
-    private func setupActions() {
-        loginButton.addTarget(self, action: #selector(loginButtonTapped), for: .touchUpInside)
-        googleButton.addTarget(self, action: #selector(googleSignInTapped), for: .touchUpInside)
-        forgotPasswordButton.addTarget(self, action: #selector(forgotPasswordTapped), for: .touchUpInside)
-        
-        let signUpTapGesture = UITapGestureRecognizer(target: self, action: #selector(signUpLabelTapped))
-        signUpLabel.addGestureRecognizer(signUpTapGesture)
-    }
-    
-    @objc private func loginButtonTapped() {
-        viewModel.login()
-    }
-    
-    @objc private func googleSignInTapped() {
-        viewModel.signInWithGoogle(presenting: self)
-    }
-    
-    @objc private func signUpLabelTapped() {
-        dismiss(animated: true)
-    }
-    
-    @objc private func forgotPasswordTapped() {
-        guard let email = emailTextField.text, !email.isEmpty else {
-            let alert = UIAlertController(title: "Error", message: "Please enter your email address", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            present(alert, animated: true)
-            return
-        }
-        
-        viewModel.resetPassword(email: email)
-    }
-    
-    private func setupGoogleButton() {
-        googleButton.addSubview(googleIconImageView)
-        googleButton.addSubview(googleSignInLabel)
-        
-        NSLayoutConstraint.activate([
-            googleButton.heightAnchor.constraint(equalToConstant: 50),
-            googleButton.widthAnchor.constraint(equalToConstant: 220),
-            
-            googleIconImageView.leadingAnchor.constraint(equalTo: googleButton.leadingAnchor, constant: 20),
-            googleIconImageView.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
-            googleIconImageView.widthAnchor.constraint(equalToConstant: 24),
-            googleIconImageView.heightAnchor.constraint(equalToConstant: 24),
-            
-            googleSignInLabel.centerYAnchor.constraint(equalTo: googleButton.centerYAnchor),
-            googleSignInLabel.centerXAnchor.constraint(equalTo: googleButton.centerXAnchor, constant: 10)
-        ])
-    }
 }
 
-extension LoginViewController: LoginViewModelDelegate {
-    func didLoginSuccessfully() {
-        DispatchQueue.main.async {
-            self.dismiss(animated: true)
-        }
-    }
-    
-    func didFailLogin(with error: Error) {
-        DispatchQueue.main.async {
-            let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            self.present(alert, animated: true)
-        }
-    }
-    
-    func didSendResetPasswordEmail() {
-        DispatchQueue.main.async {
-            let alert = UIAlertController(
-                title: "Success",
-                message: "Password reset instructions have been sent to your email",
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            self.present(alert, animated: true)
-        }
-    }
-}
-
-struct LoginViewControllerRepresentable: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> LoginViewController {
-        let vc = LoginViewController()
-        return vc
-    }
-    
-    func updateUIViewController(_ uiViewController: LoginViewController, context: Context) {
+extension UITextField {
+    var textPublisher: AnyPublisher<String, Never> {
+        NotificationCenter.default
+            .publisher(for: UITextField.textDidChangeNotification, object: self)
+            .compactMap { ($0.object as? UITextField)?.text }
+            .eraseToAnyPublisher()
     }
 }
     

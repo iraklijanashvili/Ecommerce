@@ -5,7 +5,6 @@
 //  Created by Imac on 13.01.25.
 //
 
-
 import SwiftUI
 
 struct ProductSection: View {
@@ -76,16 +75,33 @@ private struct RegularProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            AsyncImageView(url: product.imageURL)
-                .frame(width: 150, height: 200)
-                .cornerRadius(10)
+            AsyncImage(url: URL(string: product.images)) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure(_):
+                    Color.gray
+                        .overlay(
+                            Image(systemName: "photo")
+                                .foregroundColor(.white)
+                        )
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .frame(width: 150, height: 200)
+            .clipped()
             
             Text(product.name)
                 .font(.caption)
                 .foregroundColor(.black)
                 .lineLimit(1)
             
-            Text(product.price.formatted)
+            Text(product.formattedPrice)
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundColor(.black)
@@ -106,9 +122,26 @@ private struct CompactProductCard: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            AsyncImageView(url: product.imageURL)
-                .frame(width: 66, height: 66)
-                .clipped()
+            AsyncImage(url: URL(string: product.images)) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure(_):
+                    Color.gray
+                        .overlay(
+                            Image(systemName: "photo")
+                                .foregroundColor(.white)
+                        )
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .frame(width: 66, height: 66)
+            .clipped()
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
@@ -116,7 +149,7 @@ private struct CompactProductCard: View {
                     .foregroundColor(.black)
                     .lineLimit(2)
                 
-                Text(product.price.formatted)
+                Text(product.formattedPrice)
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.black)
             }
@@ -140,9 +173,26 @@ private struct FeaturedProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            AsyncImageView(url: product.imageURL)
-                .frame(width: 180, height: 240)
-                .cornerRadius(12)
+            AsyncImage(url: URL(string: product.images)) { phase in
+                switch phase {
+                case .empty:
+                    ProgressView()
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure(_):
+                    Color.gray
+                        .overlay(
+                            Image(systemName: "photo")
+                                .foregroundColor(.white)
+                        )
+                @unknown default:
+                    EmptyView()
+                }
+            }
+            .frame(width: 180, height: 240)
+            .clipped()
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
@@ -150,7 +200,7 @@ private struct FeaturedProductCard: View {
                     .foregroundColor(.black)
                     .lineLimit(2)
                 
-                Text(product.price.formatted)
+                Text(product.formattedPrice)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.black)
             }
@@ -179,4 +229,4 @@ private struct ProductListView: View {
     var body: some View {
         Text("All Products")
     }
-}
+} 

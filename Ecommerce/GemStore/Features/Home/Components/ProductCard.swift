@@ -1,19 +1,19 @@
 //
-//  NewCollectionView.swift
+//  ProductCard.swift
 //  Ecommerce
 //
-//  Created by Imac on 16.01.25.
+//  Created by Imac on 13.01.25.
 //
 
 
 import SwiftUI
 
-struct NewCollectionView: View {
-    let imageURL: String
+struct ProductCard: View {
+    let product: Product
     
     var body: some View {
-        GeometryReader { geometry in
-            AsyncImage(url: URL(string: imageURL)) { phase in
+        VStack(alignment: .leading) {
+            AsyncImage(url: URL(string: product.images)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -31,10 +31,22 @@ struct NewCollectionView: View {
                     EmptyView()
                 }
             }
-            .frame(width: geometry.size.width, height: 200)
+            .frame(height: 150)
             .clipped()
-            .cornerRadius(12)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.headline)
+                
+                Text(product.formattedPrice)
+                    .font(.subheadline)
+                    .bold()
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
         }
-        .frame(height: 200)
+        .background(Color.white)
+        .cornerRadius(10)
+        .shadow(radius: 2)
     }
 } 

@@ -10,6 +10,7 @@ import UIKit
 import FirebaseAuth
 import GoogleSignIn
 import SwiftUI
+import Combine
 
 class SignUpViewController: UIViewController {
     
@@ -146,14 +147,23 @@ class SignUpViewController: UIViewController {
         return label
     }()
     
-    private var viewModel: SignUpViewModel!
+    private let viewModel: SignUpViewModel
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(viewModel: SignUpViewModel = SignUpViewModel()) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupBindings()
         setupActions()
-        setupViewModel()
-        setupKeyboardHandling()
     }
     
     private func setupUI() {
@@ -263,6 +273,68 @@ class SignUpViewController: UIViewController {
         }
     }
     
+    private func setupBindings() {
+        nameTextField.textPublisher
+            .assign(to: \.name, on: viewModel)
+            .store(in: &cancellables)
+        
+        emailTextField.textPublisher
+            .assign(to: \.email, on: viewModel)
+            .store(in: &cancellables)
+        
+        passwordTextField.textPublisher
+            .assign(to: \.password, on: viewModel)
+            .store(in: &cancellables)
+        
+        confirmPasswordTextField.textPublisher
+            .assign(to: \.confirmPassword, on: viewModel)
+            .store(in: &cancellables)
+        
+        viewModel.$isLoading
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isLoading in
+                self?.signUpButton.isEnabled = !isLoading
+                self?.signUpButton.alpha = isLoading ? 0.5 : 1
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$error
+            .receive(on: DispatchQueue.main)
+            .compactMap { $0 }
+            .sink { [weak self] error in
+                self?.showError(error)
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isNameValid
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isValid in
+                self?.nameTextField.textColor = isValid ? .black : .red
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isEmailValid
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isValid in
+                self?.emailTextField.textColor = isValid ? .black : .red
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isPasswordValid
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isValid in
+                self?.passwordTextField.textColor = isValid ? .black : .red
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$isConfirmPasswordValid
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isValid in
+                self?.confirmPasswordTextField.textColor = isValid ? .black : .red
+            }
+            .store(in: &cancellables)
+    }
+    
     private func setupActions() {
         signUpButton.addTarget(self, action: #selector(signUpButtonTapped), for: .touchUpInside)
         googleButton.addTarget(self, action: #selector(googleSignInTapped), for: .touchUpInside)
@@ -271,46 +343,26 @@ class SignUpViewController: UIViewController {
         loginLabel.addGestureRecognizer(loginTapGesture)
     }
     
-    private func setupViewModel() {
-        viewModel = SignUpViewModel()
-        viewModel.delegate = self
-    }
-    
-    private func setupKeyboardHandling() {
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow), name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide), name: UIResponder.keyboardWillHideNotification, object: nil)
-        
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
-        view.addGestureRecognizer(tapGesture)
-    }
-    
-    @objc private func keyboardWillShow(notification: NSNotification) {
-        guard let keyboardSize = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else { return }
-        let contentInsets = UIEdgeInsets(top: 0.0, left: 0.0, bottom: keyboardSize.height, right: 0.0)
-        scrollView.contentInset = contentInsets
-        scrollView.scrollIndicatorInsets = contentInsets
-    }
-    
-    @objc private func keyboardWillHide(notification: NSNotification) {
-        scrollView.contentInset = .zero
-        scrollView.scrollIndicatorInsets = .zero
-    }
-    
-    @objc private func dismissKeyboard() {
-        view.endEditing(true)
-    }
-    
     @objc private func signUpButtonTapped() {
-        guard let email = emailTextField.text,
-              let password = passwordTextField.text,
-              let confirmPassword = confirmPasswordTextField.text,
-              let name = nameTextField.text else { return }
-        
-        viewModel.signUp(email: email, password: password, confirmPassword: confirmPassword, name: name)
+        viewModel.signUp { [weak self] result in
+            switch result {
+            case .success:
+                self?.dismiss(animated: true)
+            case .failure(let error):
+                self?.showError(error)
+            }
+        }
     }
     
     @objc private func googleSignInTapped() {
-        viewModel.signInWithGoogle(presenting: self)
+        viewModel.signInWithGoogle(presenting: self) { [weak self] result in
+            switch result {
+            case .success:
+                self?.dismiss(animated: true)
+            case .failure(let error):
+                self?.showError(error)
+            }
+        }
     }
     
     @objc private func loginLabelTapped() {
@@ -336,16 +388,8 @@ class SignUpViewController: UIViewController {
             googleSignInLabel.centerXAnchor.constraint(equalTo: googleButton.centerXAnchor, constant: 10)
         ])
     }
-}
-
-extension SignUpViewController: SignUpViewModelDelegate {
-    func didSignUpSuccessfully() {
-        DispatchQueue.main.async {
-            self.dismiss(animated: true)
-        }
-    }
     
-    func didFailSignUp(with error: Error) {
+    private func showError(_ error: Error) {
         let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)

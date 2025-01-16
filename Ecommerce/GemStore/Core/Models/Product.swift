@@ -2,83 +2,59 @@
 //  Product.swift
 //  Ecommerce
 //
-//  Created by Imac on 13.01.25.
+//  Created by Imac on 16.01.25.
 //
 
 import Foundation
 
-struct Product: Identifiable, Codable, Hashable {
+struct Product: Identifiable, Codable {
     let id: String
     let name: String
-    let price: Price
-    let imageURL: String
     let description: String
-    let category: Category
-    let section: Section
+    let price: Double
+    let images: String
+    let categoryId: String
+    let colors: [String]
+    let sizes: [String]
+    let types: [ProductType]
     
-    enum Section: String, Codable {
-        case featured
-        case recommended
+    var formattedPrice: String {
+        "$\(String(format: "%.2f", price))"
     }
     
-    struct Price: Codable, Hashable {
-        let amount: Double
-        let currency: Currency
-        
-        var formatted: String {
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencyCode = currency.rawValue
-            return formatter.string(from: NSNumber(value: amount)) ?? "\(currency.symbol)\(amount)"
-        }
-        
-        enum Currency: String, Codable {
-            case usd = "USD"
-            case eur = "EUR"
-            case gbp = "GBP"
-            
-            var symbol: String {
-                switch self {
-                case .usd: return "$"
-                case .eur: return "€"
-                case .gbp: return "£"
-                }
-            }
-        }
+    enum ProductType: String, Codable {
+        case featured = "featured"
+        case recommended = "recommended"
     }
     
-    enum Category: String, Codable, CaseIterable {
-        case women = "Women"
-        case men = "Men"
-        case accessories = "Accessories"
-        case beauty = "Beauty"
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        var icon: String {
-            switch self {
-            case .women: return "person.fill"
-            case .men: return "person"
-            case .accessories: return "eyeglasses"
-            case .beauty: return "sparkles"
-            }
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        description = try container.decode(String.self, forKey: .description)
+        price = try container.decode(Double.self, forKey: .price)
+        images = try container.decode(String.self, forKey: .images)
+        categoryId = try container.decode(String.self, forKey: .categoryId)
+        colors = try container.decode([String].self, forKey: .colors)
+        sizes = try container.decode([String].self, forKey: .sizes)
+        
+        if let typeStrings = try container.decodeIfPresent([String].self, forKey: .types) {
+            types = typeStrings.compactMap { ProductType(rawValue: $0) }
+        } else {
+            types = [.recommended]
         }
     }
     
-    init(
-        id: String = UUID().uuidString,
-        name: String,
-        price: Double,
-        currency: Price.Currency = .usd,
-        imageURL: String,
-        description: String = "",
-        category: Category = .women,
-        section: Section
-    ) {
-        self.id = id
-        self.name = name
-        self.price = Price(amount: price, currency: currency)
-        self.imageURL = imageURL
-        self.description = description
-        self.category = category
-        self.section = section
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case description
+        case price
+        case images
+        case categoryId
+        case colors
+        case sizes
+        case types
     }
 }

@@ -1,60 +1,37 @@
+//
+//  LoginViewModel.swift
+//  Ecommerce
+//
+//  Created by Imac on 13.01.25.
+//
+
 import Foundation
 import Combine
 import UIKit
 
-protocol LoginViewModelDelegate: AnyObject {
-    func didLoginSuccessfully()
-    func didFailLogin(with error: Error)
-    func didSendResetPasswordEmail()
-}
-
-class LoginViewModel: ObservableObject {
-    @Published var email: String = ""
-    @Published var password: String = ""
-    @Published var isLoading: Bool = false
-    @Published var error: Error?
+class LoginViewModel: AuthViewModel {
     
-    private let authService: AuthServiceProtocol
-    weak var delegate: LoginViewModelDelegate?
+    @Published var shouldNavigateToSignUp = false
+    @Published var shouldShowForgotPassword = false
     
-    init(authService: AuthServiceProtocol = AuthService()) {
-        self.authService = authService
-    }
-    
-    func login() {
-        guard !email.isEmpty, !password.isEmpty else {
-            delegate?.didFailLogin(with: AuthError.invalidEmail)
+    func login(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard validateInputs() else {
+            completion(.failure(AuthError.invalidInput))
             return
         }
         
         isLoading = true
         authService.signIn(email: email, password: password) { [weak self] result in
             self?.isLoading = false
-            switch result {
-            case .success:
-                self?.delegate?.didLoginSuccessfully()
-            case .failure(let error):
-                self?.error = error
-                self?.delegate?.didFailLogin(with: error)
-            }
+            completion(result)
         }
     }
     
-    func signInWithGoogle(presenting viewController: UIViewController) {
-        isLoading = true
-        authService.signInWithGoogle(presenting: viewController) { [weak self] result in
-            self?.isLoading = false
-            switch result {
-            case .success:
-                self?.delegate?.didLoginSuccessfully()
-            case .failure(let error):
-                self?.error = error
-                self?.delegate?.didFailLogin(with: error)
-            }
+    private func validateInputs() -> Bool {
+        guard isEmailValid, isPasswordValid else {
+            return false
         }
-    }
-    
-    func validateInput() -> Bool {
+        
         guard !email.isEmpty else {
             error = AuthError.invalidEmail
             return false
@@ -66,19 +43,5 @@ class LoginViewModel: ObservableObject {
         }
         
         return true
-    }
-    
-    func resetPassword(email: String) {
-        isLoading = true
-        authService.resetPassword(email: email) { [weak self] result in
-            self?.isLoading = false
-            switch result {
-            case .success:
-                self?.delegate?.didSendResetPasswordEmail()
-            case .failure(let error):
-                self?.error = error
-                self?.delegate?.didFailLogin(with: error)
-            }
-        }
     }
 } 

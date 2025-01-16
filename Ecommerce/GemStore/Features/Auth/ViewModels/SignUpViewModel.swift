@@ -7,103 +7,87 @@
 
 
 import Foundation
-import FirebaseAuth
-import GoogleSignIn
+import Combine
+import UIKit
 
-protocol SignUpViewModelDelegate: AnyObject {
-    func didSignUpSuccessfully()
-    func didFailSignUp(with error: Error)
-}
-
-class SignUpViewModel {
+class SignUpViewModel: AuthViewModel {
+    @Published var name: String = ""
+    @Published var confirmPassword: String = ""
+    @Published var isNameValid: Bool = true
+    @Published var isConfirmPasswordValid: Bool = true
+    @Published var shouldNavigateToLogin = false
     
-    private let authService: AuthServiceProtocol
-    weak var delegate: SignUpViewModelDelegate?
+    private var additionalCancellables = Set<AnyCancellable>()
     
-    init(authService: AuthServiceProtocol = AuthService()) {
-        self.authService = authService
+    override init(authService: AuthServiceProtocol = AuthService()) {
+        super.init(authService: authService)
+        setupAdditionalValidation()
     }
     
-    func signUp(email: String, password: String, confirmPassword: String, name: String) {
+    private func setupAdditionalValidation() {
+        $name
+            .debounce(for: 0.5, scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { [weak self] name in
+                self?.validateName(name)
+            }
+            .store(in: &additionalCancellables)
+        
+        $confirmPassword
+            .combineLatest($password)
+            .debounce(for: 0.5, scheduler: RunLoop.main)
+            .sink { [weak self] confirmPassword, password in
+                self?.validateConfirmPassword(confirmPassword, password: password)
+            }
+            .store(in: &additionalCancellables)
+    }
+    
+    private func validateName(_ name: String) {
+        isNameValid = name.count >= 2
+    }
+    
+    private func validateConfirmPassword(_ confirmPassword: String, password: String) {
+        isConfirmPasswordValid = confirmPassword == password
+    }
+    
+    private func validateInputs() -> Bool {
+        guard isEmailValid, isPasswordValid, isNameValid, isConfirmPasswordValid else {
+            return false
+        }
+        
+        guard !name.isEmpty else {
+            error = AuthError.invalidName
+            return false
+        }
+        
+        guard !email.isEmpty else {
+            error = AuthError.invalidEmail
+            return false
+        }
+        
+        guard !password.isEmpty else {
+            error = AuthError.weakPassword
+            return false
+        }
+        
         guard password == confirmPassword else {
-            delegate?.didFailSignUp(with: AuthError.passwordMismatch)
+            error = AuthError.passwordMismatch
+            return false
+        }
+        
+        return true
+    }
+    
+    func signUp(completion: @escaping (Result<Void, Error>) -> Void) {
+        guard validateInputs() else {
+            completion(.failure(AuthError.invalidInput))
             return
         }
         
-        guard isValidEmail(email) else {
-            delegate?.didFailSignUp(with: AuthError.invalidEmail)
-            return
-        }
-        
-        guard isValidPassword(password) else {
-            delegate?.didFailSignUp(with: AuthError.weakPassword)
-            return
-        }
-        
+        isLoading = true
         authService.signUp(email: email, password: password, name: name) { [weak self] result in
-            switch result {
-            case .success:
-                self?.delegate?.didSignUpSuccessfully()
-            case .failure(let error):
-                self?.delegate?.didFailSignUp(with: error)
-            }
+            self?.isLoading = false
+            completion(result)
         }
-    }
-    
-    func signInWithGoogle(presenting viewController: UIViewController) {
-        authService.signInWithGoogle(presenting: viewController) { [weak self] result in
-            switch result {
-            case .success:
-                self?.delegate?.didSignUpSuccessfully()
-            case .failure(let error):
-                self?.delegate?.didFailSignUp(with: error)
-            }
-        }
-    }
-    
-    func sendSignInLink(email: String) {
-        guard isValidEmail(email) else {
-            delegate?.didFailSignUp(with: AuthError.invalidEmail)
-            return
-        }
-        
-        authService.sendSignInLink(to: email) { [weak self] result in
-            switch result {
-            case .success:
-                self?.delegate?.didSignUpSuccessfully()
-            case .failure(let error):
-                self?.delegate?.didFailSignUp(with: error)
-            }
-        }
-    }
-    
-    func handleEmailLink(_ link: String) {
-        guard authService.isSignInWithEmailLink(link),
-              let email = UserDefaults.standard.string(forKey: "EmailForSignIn") else {
-            delegate?.didFailSignUp(with: AuthError.unknown(NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid email link"])))
-            return
-        }
-        
-        authService.signInWithEmailLink(email: email, link: link) { [weak self] result in
-            switch result {
-            case .success:
-                UserDefaults.standard.removeObject(forKey: "EmailForSignIn")
-                self?.delegate?.didSignUpSuccessfully()
-            case .failure(let error):
-                self?.delegate?.didFailSignUp(with: error)
-            }
-        }
-    }
-    
-    private func isValidEmail(_ email: String) -> Bool {
-        let emailRegEx = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
-        let emailPred = NSPredicate(format:"SELF MATCHES %@", emailRegEx)
-        return emailPred.evaluate(with: email)
-    }
-    
-    private func isValidPassword(_ password: String) -> Bool {
-        let passwordRegEx = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$"
-        let passwordPred = NSPredicate(format:"SELF MATCHES %@", passwordRegEx)
-        return passwordPred.evaluate(with: password)
     }
 } 
