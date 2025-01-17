@@ -20,10 +20,10 @@ struct MainTabView: View {
                 }
                 .tag(0)
             
-            Text("Cart")
+            DiscoverViewControllerRepresentable()
                 .tabItem {
-                    Image(systemName: "cart.fill")
-                    Text("Cart")
+                    Image(systemName: "magnifyingglass")
+                    Text("Discover")
                 }
                 .tag(1)
             
@@ -41,5 +41,14 @@ struct MainTabView: View {
                 }
                 .tag(3)
         }
+    }
+}
+
+struct DiscoverViewControllerRepresentable: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> DiscoverViewController {
+        return DiscoverViewController()
+    }
+    
+    func updateUIViewController(_ uiViewController: DiscoverViewController, context: Context) {
     }
 }

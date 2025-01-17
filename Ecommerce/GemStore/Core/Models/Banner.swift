@@ -12,10 +12,15 @@ struct Banner: Identifiable, Codable {
     let title: String
     let description: String
     let imageUrl: String
-    let linkId: String
-    let linkType: BannerType
+    let link: String
+    let isActive: Bool
+    let type: String
     
-    enum BannerType: String, Codable {
+    var bannerType: BannerType? {
+        BannerType(rawValue: type)
+    }
+    
+    enum BannerType: String {
         case main = "main"
         case newCollection = "new_collection"
         case topCollection = "top_collection"
@@ -24,24 +29,15 @@ struct Banner: Identifiable, Codable {
         var displayTitle: String {
             switch self {
             case .main:
-                return "Main Banner"
+                return "მთავარი ბანერი"
             case .newCollection:
-                return "New Collection"
+                return "ახალი კოლექცია"
             case .topCollection:
-                return "Top Collection"
+                return "საუკეთესო კოლექცია"
             case .summerCollection:
-                return "Summer Collection"
+                return "ზაფხულის კოლექცია"
             }
         }
-    }
-    
-    enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case description
-        case imageUrl = "image_url"
-        case linkId = "link_id"
-        case linkType = "type"
     }
 } 
 

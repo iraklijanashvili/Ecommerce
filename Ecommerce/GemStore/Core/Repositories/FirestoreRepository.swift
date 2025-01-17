@@ -13,63 +13,132 @@ import FirebaseFirestore
 protocol FirestoreRepository {
     func getBanners() async throws -> [Banner]
     func getProducts() async throws -> [Product]
+    func getCategories() async throws -> [Category]
+    func getProductsForCategory(_ categoryId: String) async throws -> [Product]
+    func fetchCategories() async throws -> [Category]
 }
 
 class FirestoreRepositoryImpl: FirestoreRepository {
     private let db = Firestore.firestore()
     
     func getBanners() async throws -> [Banner] {
-        let bannerDocuments = ["Main Banner", "New Collection", "Top Collection", "Summer Collection"]
-        var banners: [Banner] = []
+        print("Fetching banners from Firestore...")
+        let snapshot = try await db.collection("banners")
+            .whereField("isActive", isEqualTo: true)
+            .getDocuments()
         
-        for document in bannerDocuments {
+        print("Got \(snapshot.documents.count) banner documents")
+        
+        return try snapshot.documents.compactMap { document -> Banner? in
+            var data = document.data()
+            data["id"] = document.documentID
+            
+            print("Processing banner document: \(document.documentID)")
+            print("Banner data: \(data)")
+            
             do {
-                let snapshot = try await db.collection("banners").document(document).getDocument()
-                
-                if let data = snapshot.data() {
-                    if let imageUrl = data["image_url"] as? String {
-                        let type: Banner.BannerType
-                        switch document {
-                        case "Main Banner":
-                            type = .main
-                        case "New Collection":
-                            type = .newCollection
-                        case "Top Collection":
-                            type = .topCollection
-                        case "Summer Collection":
-                            type = .summerCollection
-                        default:
-                            continue
-                        }
-                        
-                        let banner = Banner(
-                            id: data["id"] as? String ?? "",
-                            title: data["title"] as? String ?? type.displayTitle,
-                            description: data["description"] as? String ?? "",
-                            imageUrl: imageUrl,
-                            linkId: data["link_id"] as? String ?? "",
-                            linkType: type
-                        )
-                        banners.append(banner)
-                    }
-                }
+                let banner = try Firestore.Decoder().decode(Banner.self, from: data)
+                print("Successfully decoded banner: \(banner.id)")
+                print("Banner type: \(banner.type)")
+                print("Banner isActive: \(banner.isActive)")
+                return banner
             } catch {
+                print("Error decoding banner document \(document.documentID): \(error)")
                 throw error
             }
         }
-        
-        return banners
     }
     
     func getProducts() async throws -> [Product] {
+        print("Fetching products from Firestore...")
         let snapshot = try await db.collection("products").getDocuments()
         
-        return try snapshot.documents.compactMap { document in
+        print("Got \(snapshot.documents.count) product documents")
+        
+        return try snapshot.documents.compactMap { document -> Product? in
             var data = document.data()
-            if data["id"] == nil {
-                data["id"] = document.documentID
+            data["id"] = document.documentID
+            do {
+                let product = try Firestore.Decoder().decode(Product.self, from: data)
+                print("Successfully decoded product: \(product.id)")
+                return product
+            } catch {
+                print("Error decoding product document \(document.documentID): \(error)")
+                throw error
             }
-            return try Firestore.Decoder().decode(Product.self, from: data)
+        }
+    }
+    
+    func getCategories() async throws -> [Category] {
+        print("Fetching categories from Firestore...")
+        let snapshot = try await db.collection("categories").getDocuments()
+        
+        print("Got \(snapshot.documents.count) category documents")
+        
+        return try snapshot.documents.compactMap { document -> Category? in
+            var data = document.data()
+            data["id"] = document.documentID
+            do {
+                let category = try Firestore.Decoder().decode(Category.self, from: data)
+                print("Successfully decoded category: \(category.id)")
+                return category
+            } catch {
+                print("Error decoding category document \(document.documentID): \(error)")
+                throw error
+            }
+        }
+    }
+    
+    func getProductsForCategory(_ categoryId: String) async throws -> [Product] {
+        print("Fetching products for category \(categoryId)...")
+        let snapshot = try await db.collection("products")
+            .whereField("categoryId", isEqualTo: categoryId)
+            .getDocuments()
+        
+        print("Got \(snapshot.documents.count) product documents for category \(categoryId)")
+        
+        return try snapshot.documents.compactMap { document -> Product? in
+            var data = document.data()
+            data["id"] = document.documentID
+            do {
+                let product = try Firestore.Decoder().decode(Product.self, from: data)
+                print("Successfully decoded product: \(product.id)")
+                return product
+            } catch {
+                print("Error decoding product document \(document.documentID): \(error)")
+                throw error
+            }
+        }
+    }
+    
+    func fetchCategories() async throws -> [Category] {
+        print("Fetching categories...")
+        let snapshot = try await db.collection("categories").getDocuments()
+        print("Got \(snapshot.documents.count) category documents")
+        
+        return try snapshot.documents.map { document in
+            print("Processing category document: \(document.documentID)")
+            var categoryData = document.data()
+            categoryData["id"] = document.documentID
+            
+            // Convert subcategories data
+            if let subcategoriesData = categoryData["subcategories"] as? [String: [String: Any]] {
+                var processedSubcategories: [String: [String: Any]] = [:]
+                
+                for (subcategoryId, subcategoryData) in subcategoriesData {
+                    var processedSubcategory = subcategoryData
+                    processedSubcategory["id"] = subcategoryId
+                    processedSubcategories[subcategoryId] = processedSubcategory
+                }
+                
+                categoryData["subcategories"] = processedSubcategories
+            }
+            
+            print("Category data prepared: \(categoryData)")
+            let jsonData = try JSONSerialization.data(withJSONObject: categoryData)
+            let category = try JSONDecoder().decode(Category.self, from: jsonData)
+            print("Successfully decoded category: \(category.name) with \(category.subcategoryArray.count) subcategories")
+            return category
         }
     }
 } 

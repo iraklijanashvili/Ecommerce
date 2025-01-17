@@ -12,38 +12,31 @@ struct Product: Identifiable, Codable {
     let name: String
     let description: String
     let price: Double
-    let images: String
+    let imageUrl: String
     let categoryId: String
-    let colors: [String]
-    let sizes: [String]
-    let types: [ProductType]
+    let colors: [String]?
+    let sizes: [String]?
+    let types: [String]?
+    let inventory: [String: [String: Int]]?
     
     var formattedPrice: String {
-        "$\(String(format: "%.2f", price))"
+        "₾\(String(format: "%.2f", price))"
     }
     
-    enum ProductType: String, Codable {
-        case featured = "featured"
-        case recommended = "recommended"
+    func getQuantity(for color: String, size: String) -> Int {
+        return inventory?[color]?[size] ?? 0
     }
     
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        id = try container.decode(String.self, forKey: .id)
-        name = try container.decode(String.self, forKey: .name)
-        description = try container.decode(String.self, forKey: .description)
-        price = try container.decode(Double.self, forKey: .price)
-        images = try container.decode(String.self, forKey: .images)
-        categoryId = try container.decode(String.self, forKey: .categoryId)
-        colors = try container.decode([String].self, forKey: .colors)
-        sizes = try container.decode([String].self, forKey: .sizes)
-        
-        if let typeStrings = try container.decodeIfPresent([String].self, forKey: .types) {
-            types = typeStrings.compactMap { ProductType(rawValue: $0) }
-        } else {
-            types = [.recommended]
-        }
+    func isAvailable(color: String, size: String) -> Bool {
+        return getQuantity(for: color, size: size) > 0
+    }
+    
+    var isFeatured: Bool {
+        return types?.contains("featured") ?? false
+    }
+    
+    var isRecommended: Bool {
+        return types?.contains("recommended") ?? false
     }
     
     enum CodingKeys: String, CodingKey {
@@ -51,10 +44,11 @@ struct Product: Identifiable, Codable {
         case name
         case description
         case price
-        case images
+        case imageUrl = "images"
         case categoryId
         case colors
         case sizes
         case types
+        case inventory
     }
 }

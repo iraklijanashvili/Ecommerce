@@ -75,7 +75,7 @@ private struct RegularProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            AsyncImage(url: URL(string: product.images)) { phase in
+            AsyncImage(url: URL(string: product.imageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -122,7 +122,7 @@ private struct CompactProductCard: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            AsyncImage(url: URL(string: product.images)) { phase in
+            AsyncImage(url: URL(string: product.imageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -173,7 +173,7 @@ private struct FeaturedProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            AsyncImage(url: URL(string: product.images)) { phase in
+            AsyncImage(url: URL(string: product.imageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()

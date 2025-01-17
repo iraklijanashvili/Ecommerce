@@ -1,29 +1,31 @@
-//
-//  Category.swift
-//  Ecommerce
-//
-//  Created by Imac on 16.01.25.
-//
-
-
 import Foundation
 
-extension Product {
-    enum Category: String, CaseIterable, Identifiable, Hashable {
-        case women = "Women"
-        case men = "Men"
-        case accessories = "Accessories"
-        case beauty = "Beauty"
+struct Category: Identifiable, Codable {
+    let id: String
+    let name: String
+    let imageUrl: String
+    let subcategories: [String: Subcategory]
+    
+    var subcategoryArray: [Subcategory] {
+        subcategories.values.sorted { $0.itemCount > $1.itemCount }
+    }
+    
+    struct Subcategory: Codable {
+        let id: String
+        let name: String
+        let itemCount: Int
         
-        var id: String { rawValue }
-        
-        var icon: String {
-            switch self {
-            case .women: return "person.fill"
-            case .men: return "person"
-            case .accessories: return "eyeglasses"
-            case .beauty: return "sparkles"
-            }
+        enum CodingKeys: String, CodingKey {
+            case id
+            case name
+            case itemCount = "item_count"
         }
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case imageUrl = "imageUrl"
+        case subcategories
     }
 } 

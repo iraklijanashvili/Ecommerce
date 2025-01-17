@@ -13,7 +13,7 @@ struct ProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            AsyncImage(url: URL(string: product.images)) { phase in
+            AsyncImage(url: URL(string: product.imageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
