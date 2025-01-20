@@ -12,104 +12,92 @@ struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
     
     var body: some View {
-        NavigationView {
-            GeometryReader { geometry in
-                ZStack(alignment: .top) {
-                    if viewModel.isLoading {
-                        ProgressView()
-                    } else if let error = viewModel.error {
-                        ErrorView(error: error) {
-                            Task {
-                                await viewModel.loadData()
-                            }
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                if viewModel.isLoading {
+                    ProgressView()
+                } else if let error = viewModel.error {
+                    ErrorView(error: error) {
+                        Task {
+                            await viewModel.loadData()
                         }
-                    } else {
-                        ScrollView(showsIndicators: false) {
-                            VStack(spacing: 20) {
-                                if !viewModel.categories.isEmpty {
-                                    HomeCategorySection(
-                                        categories: viewModel.categories,
-                                        onCategorySelect: { category in
-                                            // Handle category selection
-                                        }
-                                    )
+                    }
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 20) {
+                            if !viewModel.categories.isEmpty {
+                                HomeCategorySection(categories: viewModel.categories)
                                     .padding(.top, 65)
-                                }
-                                
-                                if !viewModel.mainBanners.isEmpty {
-                                    TabView {
-                                        ForEach(viewModel.mainBanners) { banner in
-                                            BannerView(banner: banner)
-                                        }
+                            }
+                            
+                            if !viewModel.mainBanners.isEmpty {
+                                TabView {
+                                    ForEach(viewModel.mainBanners) { banner in
+                                        BannerView(banner: banner)
                                     }
-                                    .frame(height: 200)
-                                    .tabViewStyle(.page)
+                                }
+                                .frame(height: 200)
+                                .tabViewStyle(.page)
+                                .padding(.horizontal)
+                            }
+                            
+                            if !viewModel.featuredProducts.isEmpty {
+                                ProductSection(
+                                    title: "Featured Products",
+                                    products: viewModel.featuredProducts,
+                                    style: .featured
+                                )
+                            }
+                            
+                            if let newCollectionBanner = viewModel.newCollectionBanner {
+                                BannerView(banner: newCollectionBanner)
                                     .padding(.horizontal)
-                                }
+                            }
+                            
+                   
+                            
+                            if !viewModel.recommendedProducts.isEmpty {
+                                ProductSection(
+                                    title: "Recommended",
+                                    products: viewModel.recommendedProducts,
+                                    style: .compact
+                                )
                                 
-                                if !viewModel.featuredProducts.isEmpty {
-                                    ProductSection(
-                                        title: "Featured Products",
-                                        products: viewModel.featuredProducts,
-                                        style: .featured,
-                                        onProductTap: { product in
-                                            // Handle product selection
-                                        }
-                                    )
-                                }
                                 
-                                if let newCollectionBanner = viewModel.newCollectionBanner {
-                                    BannerView(banner: newCollectionBanner)
-                                        .padding(.horizontal)
-                                }
+                            }
+                            
+                            if let topCollectionBanner = viewModel.topCollectionBanner {
+                                Text("Top Collection")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
                                 
-                                if !viewModel.recommendedProducts.isEmpty {
-                                    ProductSection(
-                                        title: "Recommended",
-                                        products: viewModel.recommendedProducts,
-                                        style: .compact,
-                                        onProductTap: { product in
-                                            // Handle product selection
-                                        }
-                                    )
-                                }
-                                
-                                if let topCollectionBanner = viewModel.topCollectionBanner {
-                                    Text("Top Collection")
-                                        .font(.headline)
-                                        .foregroundColor(.black)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                        .padding(.horizontal)
-                                    
-                                    BannerView(banner: topCollectionBanner)
-                                        .padding(.horizontal)
-                                }
-                                
-                                if let summerCollectionBanner = viewModel.summerCollectionBanner {
-                                    BannerView(banner: summerCollectionBanner)
-                                        .padding(.horizontal)
-                                }
+                                BannerView(banner: topCollectionBanner)
+                                    .padding(.horizontal)
+                            }
+                            
+                            if let summerCollectionBanner = viewModel.summerCollectionBanner {
+                                BannerView(banner: summerCollectionBanner)
+                                    .padding(.horizontal)
                             }
                         }
                     }
-                    
-                    VStack(spacing: 0) {
-                        Color(UIColor.systemBackground)
-                            .frame(height: geometry.safeAreaInsets.top)
-                        
-                        CustomNavigationBar()
-                            .background(Color(UIColor.systemBackground))
-                            .shadow(radius: 2)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .ignoresSafeArea(edges: .top)
                 }
-            }
-            .navigationBarHidden(true)
-            .task {
-                await viewModel.loadData()
+                
+                VStack(spacing: 0) {
+                    Color(UIColor.systemBackground)
+                        .frame(height: geometry.safeAreaInsets.top)
+                    
+                    CustomNavigationBar()
+                        .background(Color(UIColor.systemBackground))
+                        .shadow(radius: 2)
+                }
+                .frame(maxWidth: .infinity)
+                .ignoresSafeArea(edges: .top)
             }
         }
+        .navigationBarHidden(true)
     }
 }
 

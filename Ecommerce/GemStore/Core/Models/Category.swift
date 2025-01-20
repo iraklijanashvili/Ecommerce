@@ -1,3 +1,12 @@
+//
+//  Category.swift
+//  Ecommerce
+//
+//  Created by Imac on 16.01.25.
+//
+
+
+
 import Foundation
 
 struct Category: Identifiable, Codable {

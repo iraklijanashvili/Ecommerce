@@ -1,71 +1,98 @@
+//
+//  HomeViewModel.swift
+//  Ecommerce
+//
+//  Created by Imac on 16.01.25.
+//
+
+
 import Foundation
 import Combine
 
-@MainActor
 class HomeViewModel: ObservableObject {
-    @Published var banners: [Banner] = []
-    @Published var categories: [Category] = []
-    @Published var featuredProducts: [Product] = []
-    @Published var recommendedProducts: [Product] = []
-    @Published var isLoading = false
-    @Published var error: Error?
+    @Published private(set) var banners: [Banner] = []
+    @Published private(set) var categories: [Category] = []
+    @Published private(set) var products: [Product] = []
+    @Published private(set) var isLoading = false
+    @Published private(set) var error: Error?
     
-    private let bannerService: BannerService
-    private let categoryService: CategoryService
-    private let productService: ProductService
+    private let firestoreService: FirestoreService
+    private var cancellables = Set<AnyCancellable>()
     
-    init(
-        bannerService: BannerService = BannerServiceImpl(),
-        categoryService: CategoryService = CategoryServiceImpl(),
-        productService: ProductService = ProductServiceImpl()
-    ) {
-        self.bannerService = bannerService
-        self.categoryService = categoryService
-        self.productService = productService
+    init(firestoreService: FirestoreService = FirestoreServiceImpl()) {
+        self.firestoreService = firestoreService
+        print("HomeViewModel initialized")
+        
+        DispatchQueue.main.async {
+            Task {
+                await self.loadData()
+            }
+        }
     }
     
+    @MainActor
     func loadData() async {
+        print("Starting to load data...")
         isLoading = true
         error = nil
         
         do {
-            async let bannersTask = bannerService.fetchBanners()
-            async let categoriesTask = categoryService.fetchCategories()
-            async let featuredTask = productService.getProductsForCategory("featured")
-            async let recommendedTask = productService.getProductsForCategory("recommended")
+            print("Fetching data sequentially...")
             
-            let (banners, categories, featured, recommended) = try await (
-                bannersTask,
-                categoriesTask,
-                featuredTask,
-                recommendedTask
-            )
+            let fetchedBanners = try await firestoreService.fetchBanners()
+            self.banners = fetchedBanners
+            print("Banners loaded: \(fetchedBanners.count)")
             
-            self.banners = banners
-            self.categories = categories
-            self.featuredProducts = featured
-            self.recommendedProducts = recommended
+            let fetchedCategories = try await firestoreService.fetchCategories()
+            self.categories = fetchedCategories
+            print("Categories loaded: \(fetchedCategories.count)")
+            
+            let fetchedProducts = try await firestoreService.fetchProducts()
+            self.products = fetchedProducts
+            print("Products loaded: \(fetchedProducts.count)")
+            
         } catch {
+            print("Error loading data: \(error)")
             self.error = error
         }
         
         isLoading = false
+        print("Loading completed")
     }
     
-    // Banner filtering
     var mainBanners: [Banner] {
-        banners.filter { $0.type == "main" }
+        let filtered = banners.filter { $0.type == "main" }
+        print("Filtering main banners. Count: \(filtered.count)")
+        return filtered
     }
     
     var newCollectionBanner: Banner? {
-        banners.first { $0.type == "new_collection" }
+        let banner = banners.first { $0.type == "new_collection" }
+        print("New collection banner found: \(banner != nil)")
+        return banner
     }
     
     var topCollectionBanner: Banner? {
-        banners.first { $0.type == "top_collection" }
+        let banner = banners.first { $0.type == "top_collection" }
+        print("Top collection banner found: \(banner != nil)")
+        return banner
     }
     
     var summerCollectionBanner: Banner? {
-        banners.first { $0.type == "summer_collection" }
+        let banner = banners.first { $0.type == "summer_collection" }
+        print("Summer collection banner found: \(banner != nil)")
+        return banner
+    }
+    
+    var featuredProducts: [Product] {
+        let featured = firestoreService.getFeaturedProducts(from: products)
+        print("Featured products count: \(featured.count)")
+        return featured
+    }
+    
+    var recommendedProducts: [Product] {
+        let recommended = firestoreService.getRecommendedProducts(from: products)
+        print("Recommended products count: \(recommended.count)")
+        return recommended
     }
 } 

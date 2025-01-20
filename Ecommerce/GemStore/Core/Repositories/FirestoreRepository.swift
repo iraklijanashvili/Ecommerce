@@ -121,7 +121,6 @@ class FirestoreRepositoryImpl: FirestoreRepository {
             var categoryData = document.data()
             categoryData["id"] = document.documentID
             
-            // Convert subcategories data
             if let subcategoriesData = categoryData["subcategories"] as? [String: [String: Any]] {
                 var processedSubcategories: [String: [String: Any]] = [:]
                 

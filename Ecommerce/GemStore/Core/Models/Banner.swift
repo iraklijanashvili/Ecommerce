@@ -1,5 +1,5 @@
 //
-//  Product.swift
+//  Banner.swift
 //  Ecommerce
 //
 //  Created by Imac on 16.01.25.
