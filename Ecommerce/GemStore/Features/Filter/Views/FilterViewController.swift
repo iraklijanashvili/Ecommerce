@@ -255,7 +255,6 @@ class FilterViewController: UIViewController {
         categoriesTableView.reloadData()
     }
     
-    // MARK: - Actions
     @objc private func categoriesButtonTapped() {
         isCategoriesExpanded.toggle()
     }

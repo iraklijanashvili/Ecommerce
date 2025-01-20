@@ -8,6 +8,11 @@
 import UIKit
 
 class ProductCell: UICollectionViewCell {
+    private var product: Product?
+    private let favoritesService = FavoritesServiceImpl.shared
+    
+    var onFavoriteToggle: ((Product) -> Void)?
+    
     private let imageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
@@ -34,6 +39,14 @@ class ProductCell: UICollectionViewCell {
         return label
     }()
     
+    private let favoriteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "heart"), for: .normal)
+        button.tintColor = .red
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -56,6 +69,9 @@ class ProductCell: UICollectionViewCell {
         containerView.addSubview(imageView)
         containerView.addSubview(nameLabel)
         containerView.addSubview(priceLabel)
+        containerView.addSubview(favoriteButton)
+        
+        favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
@@ -67,6 +83,11 @@ class ProductCell: UICollectionViewCell {
             imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
             imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
             imageView.heightAnchor.constraint(equalTo: containerView.widthAnchor, constant: -16),
+            
+            favoriteButton.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
+            favoriteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            favoriteButton.widthAnchor.constraint(equalToConstant: 32),
+            favoriteButton.heightAnchor.constraint(equalToConstant: 32),
             
             nameLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
             nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
@@ -84,9 +105,11 @@ class ProductCell: UICollectionViewCell {
         imageView.image = nil
         nameLabel.text = nil
         priceLabel.text = nil
+        product = nil
     }
     
     func configure(with product: Product) {
+        self.product = product
         nameLabel.text = product.name
         priceLabel.text = product.formattedPrice
         
@@ -95,6 +118,21 @@ class ProductCell: UICollectionViewCell {
                 self?.imageView.image = image
             }
         }
+        
+        updateFavoriteButton()
+    }
+    
+    private func updateFavoriteButton() {
+        guard let product = product else { return }
+        let isFavorite = favoritesService.isFavorite(productId: product.id)
+        let imageName = isFavorite ? "heart.fill" : "heart"
+        favoriteButton.setImage(UIImage(systemName: imageName), for: .normal)
+    }
+    
+    @objc private func favoriteButtonTapped() {
+        guard let product = product else { return }
+        onFavoriteToggle?(product)
+        updateFavoriteButton()
     }
     
     override func layoutSubviews() {
@@ -110,4 +148,4 @@ class ProductCell: UICollectionViewCell {
             containerView.layer.shadowPath = UIBezierPath(roundedRect: containerView.bounds, cornerRadius: containerView.layer.cornerRadius).cgPath
         }
     }
-} 
+}
