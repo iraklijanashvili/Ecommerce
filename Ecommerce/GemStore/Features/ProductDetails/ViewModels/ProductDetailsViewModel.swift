@@ -25,10 +25,10 @@ protocol ProductDetailsViewModelProtocol {
     func toggleFavorite()
 }
 
-class ProductDetailsViewModel: ProductDetailsViewModelProtocol {
-    private(set) var product: Product
-    private(set) var selectedColor: ProductColor?
-    private(set) var selectedSize: String?
+class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject {
+    @Published var product: Product
+    @Published var selectedColor: ProductColor?
+    @Published var selectedSize: String?
     private let favoritesService: FavoritesService
     
     weak var delegate: ProductDetailsViewModelDelegate?

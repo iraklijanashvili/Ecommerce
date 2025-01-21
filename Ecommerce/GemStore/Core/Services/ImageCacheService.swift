@@ -1,5 +1,5 @@
 //
-//  ImageCache.swift
+//  ImageCacheService.swift
 //  Ecommerce
 //
 //  Created by Imac on 21.01.25.

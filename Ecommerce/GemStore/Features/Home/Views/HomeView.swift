@@ -17,7 +17,7 @@ struct HomeView: View {
                 if viewModel.isLoading {
                     ProgressView()
                 } else if let error = viewModel.error {
-                    ErrorView(error: error) {
+                    SharedErrorView(error: error) {
                         Task {
                             await viewModel.loadData()
                         }
@@ -133,23 +133,6 @@ private struct NotificationButton: View {
         Button(action: {}) {
             Image(systemName: "bell")
                 .foregroundColor(.primary)
-        }
-    }
-}
-
-private struct ErrorView: View {
-    let error: Error
-    let retryAction: () -> Void
-    
-    var body: some View {
-        VStack {
-            Text("Error: \(error.localizedDescription)")
-                .multilineTextAlignment(.center)
-                .padding()
-            
-            Button("Retry") {
-                retryAction()
-            }
         }
     }
 }

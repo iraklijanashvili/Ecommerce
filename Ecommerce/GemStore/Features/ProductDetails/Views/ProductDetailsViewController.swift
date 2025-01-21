@@ -9,6 +9,7 @@ import UIKit
 
 class ProductDetailsViewController: UIViewController {
     private let viewModel: ProductDetailsViewModelProtocol
+    var hideDefaultNavigationItems: Bool = false
     
     private let scrollView: UIScrollView = {
         let scrollView = UIScrollView()
@@ -118,8 +119,10 @@ class ProductDetailsViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationController?.setNavigationBarHidden(false, animated: true)
-        title = "Product Details"
+        view.backgroundColor = .white
+        if !hideDefaultNavigationItems {
+            title = "Product Details"
+        }
         setupNavigationBar()
         setupUI()
         setupCollectionViews()
@@ -129,16 +132,18 @@ class ProductDetailsViewController: UIViewController {
     }
     
     private func setupNavigationBar() {
-        let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.left"),
-                                       style: .plain,
-                                       target: self,
-                                       action: #selector(backButtonTapped))
-        backButton.tintColor = .black
-        navigationItem.leftBarButtonItem = backButton
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        if !hideDefaultNavigationItems {
+            let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.left"),
+                                           style: .plain,
+                                           target: self,
+                                           action: #selector(backButtonTapped))
+            backButton.tintColor = .black
+            navigationItem.leftBarButtonItem = backButton
+        }
     }
     
     @objc private func backButtonTapped() {
-        navigationController?.setNavigationBarHidden(true, animated: true)
         navigationController?.popViewController(animated: true)
     }
     
@@ -269,7 +274,6 @@ class ProductDetailsViewController: UIViewController {
     }
 }
 
-// MARK: - UICollectionView DataSource & Delegate
 extension ProductDetailsViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         if collectionView == colorsCollectionView {

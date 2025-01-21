@@ -18,6 +18,7 @@ struct Product: Identifiable, Codable {
     let sizes: [String]?
     let types: [String]?
     let inventory: [String: [String: Int]]?
+    let collectionType: String?
     
     var formattedPrice: String {
         "₾\(String(format: "%.2f", price))"
@@ -50,5 +51,6 @@ struct Product: Identifiable, Codable {
         case sizes
         case types
         case inventory
+        case collectionType = "collection_type"
     }
 }

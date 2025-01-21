@@ -29,13 +29,13 @@ struct Banner: Identifiable, Codable {
         var displayTitle: String {
             switch self {
             case .main:
-                return "მთავარი ბანერი"
+                return "Main"
             case .newCollection:
-                return "ახალი კოლექცია"
+                return "New Collection"
             case .topCollection:
-                return "საუკეთესო კოლექცია"
+                return "Top Collection"
             case .summerCollection:
-                return "ზაფხულის კოლექცია"
+                return "Summer Collection"
             }
         }
     }
