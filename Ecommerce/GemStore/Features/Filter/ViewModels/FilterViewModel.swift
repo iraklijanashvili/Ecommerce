@@ -19,6 +19,7 @@ class FilterViewModel {
     private(set) var selectedColors: Set<ProductColor>
     private(set) var selectedCategories: Set<ProductCategory>
     private(set) var currentPriceRange: PriceRange
+    private(set) var currentSortOption: SortOption
     
     weak var delegate: FilterViewModelDelegate?
     
@@ -49,6 +50,7 @@ class FilterViewModel {
         self.selectedColors = currentFilter.selectedColors
         self.selectedCategories = currentFilter.selectedCategories
         self.currentPriceRange = currentFilter.priceRange
+        self.currentSortOption = currentFilter.sortBy
     }
     
     func toggleColor(_ color: ProductColor) {
@@ -74,6 +76,11 @@ class FilterViewModel {
         delegate?.filterViewModelDidUpdateFilter()
     }
     
+    func updateSortOption(_ option: SortOption) {
+        currentSortOption = option
+        delegate?.filterViewModelDidUpdateFilter()
+    }
+    
     func isColorSelected(_ color: ProductColor) -> Bool {
         return selectedColors.contains(color)
     }
@@ -86,6 +93,7 @@ class FilterViewModel {
         selectedColors.removeAll()
         selectedCategories.removeAll()
         currentPriceRange = PriceRange(min: 0, max: 1000)
+        currentSortOption = .none
         delegate?.filterViewModelDidReset()
     }
     
@@ -93,7 +101,8 @@ class FilterViewModel {
         let filter = FilterOptions(
             priceRange: currentPriceRange,
             selectedColors: selectedColors,
-            selectedCategories: selectedCategories
+            selectedCategories: selectedCategories,
+            sortBy: currentSortOption
         )
         delegate?.filterViewModelDidApply(filter)
     }

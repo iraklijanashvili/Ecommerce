@@ -53,6 +53,7 @@ class FirebaseCategoryRepository: CategoryRepository {
 
 class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     private let repository: CategoryRepository
+    private let filterService: ProductFilterService
     
     @Published private(set) var categories: [Category] = []
     @Published private(set) var products: [Product] = []
@@ -64,21 +65,20 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     var onProductsUpdated: (() -> Void)?
     var onError: ((Error) -> Void)?
     
-    init(repository: CategoryRepository = FirebaseCategoryRepository()) {
+    init(repository: CategoryRepository = FirebaseCategoryRepository(),
+         filterService: ProductFilterService = ProductFilterServiceImpl()) {
         self.repository = repository
+        self.filterService = filterService
     }
     
     func fetchCategories() {
         Task {
             do {
-                print("Starting to fetch categories...")
                 categories = try await repository.fetchCategories()
-                print("Successfully fetched \(categories.count) categories")
                 await MainActor.run {
                     onCategoriesUpdated?()
                 }
             } catch {
-                print("Error fetching categories: \(error)")
                 await MainActor.run {
                     onError?(error)
                 }
@@ -89,18 +89,13 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func fetchAllProducts() {
         Task {
             do {
-                print("Fetching all products...")
                 let allProducts = try await repository.fetchAllProducts()
-                
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.products = allProducts
-                    self.filteredProducts = allProducts
-                    print("Fetched \(allProducts.count) products")
-                    self.onProductsUpdated?()
+                    self.applyCurrentFilter()
                 }
             } catch {
-                print("Error fetching all products: \(error)")
                 await MainActor.run { [weak self] in
                     self?.onError?(error)
                 }
@@ -111,18 +106,13 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func fetchProducts(for categoryId: String) {
         Task {
             do {
-                print("Fetching products for category: \(categoryId)")
                 let fetchedProducts = try await repository.fetchProducts(for: categoryId)
-                
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.products = fetchedProducts
-                    self.filteredProducts = fetchedProducts
-                    print("Fetched products count: \(fetchedProducts.count)")
-                    self.onProductsUpdated?()
+                    self.applyCurrentFilter()
                 }
             } catch {
-                print("Error fetching products: \(error)")
                 await MainActor.run { [weak self] in
                     self?.onError?(error)
                 }
@@ -131,7 +121,7 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     }
     
     func search(query: String) {
-        searchQuery = query.lowercased()
+        searchQuery = query
         applyCurrentFilter()
     }
     
@@ -148,71 +138,7 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     }
     
     private func applyCurrentFilter() {
-        print("\n=== Starting filter with \(products.count) products ===")
-        
-        var matchingProducts = products
-        
-        matchingProducts = matchingProducts.filter { product in
-            var shouldInclude = true
-            
-            if !currentFilter.selectedCategories.isEmpty {
-                let categoryMatches = currentFilter.selectedCategories.contains { category in
-                    if let productCategory = ProductCategory.fromString(product.categoryId) {
-                        return productCategory == category
-                    }
-                    return false
-                }
-                print("Product '\(product.name)' with category '\(product.categoryId)' matches selected categories \(currentFilter.selectedCategories): \(categoryMatches)")
-                shouldInclude = shouldInclude && categoryMatches
-            }
-            
-            if !currentFilter.selectedColors.isEmpty {
-                guard let productColors = product.colors else {
-                    print("Product '\(product.name)' has no colors")
-                    shouldInclude = false
-                    return false
-                }
-                
-                let productColorEnums = productColors.compactMap { ProductColor.fromString($0) }
-                let hasMatchingColor = !Set(productColorEnums).isDisjoint(with: currentFilter.selectedColors)
-                
-                print("""
-                    Product: '\(product.name)'
-                    - Product colors: \(productColors)
-                    - Product color enums: \(productColorEnums)
-                    - Selected colors: \(currentFilter.selectedColors)
-                    - Has matching color: \(hasMatchingColor)
-                    """)
-                
-                shouldInclude = shouldInclude && hasMatchingColor
-            }
-            
-            let price = Double(product.price)
-            let isInRange = price >= currentFilter.priceRange.min && price <= currentFilter.priceRange.max
-            print("Product '\(product.name)' price: \(price), range: \(currentFilter.priceRange.min)-\(currentFilter.priceRange.max), matches: \(isInRange)")
-            shouldInclude = shouldInclude && isInRange
-            
-            if !searchQuery.isEmpty {
-                let matches = product.name.lowercased().contains(searchQuery.lowercased())
-                print("Product '\(product.name)' search match: \(matches) for query: '\(searchQuery)'")
-                shouldInclude = shouldInclude && matches
-            }
-            
-            return shouldInclude
-        }
-        
-        filteredProducts = matchingProducts
-        
-        print("""
-            === Filter Summary ===
-            - Categories selected: \(currentFilter.selectedCategories)
-            - Colors selected: \(currentFilter.selectedColors)
-            - Price range: \(currentFilter.priceRange.min)-\(currentFilter.priceRange.max)
-            - Search query: '\(searchQuery)'
-            - Final product count: \(filteredProducts.count)
-            ==================
-            """)
-        
+        filteredProducts = filterService.filterProducts(products, with: currentFilter, searchQuery: searchQuery)
         onProductsUpdated?()
     }
 } 

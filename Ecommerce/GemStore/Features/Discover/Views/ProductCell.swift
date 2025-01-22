@@ -17,15 +17,15 @@ class ProductCell: UICollectionViewCell {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true
-        imageView.layer.cornerRadius = 8
+        imageView.layer.cornerRadius = 12
         imageView.translatesAutoresizingMaskIntoConstraints = false
         return imageView
     }()
     
-    private let nameLabel: UILabel = {
+    private let titleLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .medium)
-        label.textColor = .black
+        label.textAlignment = .left
+        label.font = .systemFont(ofSize: 14, weight: .medium)
         label.numberOfLines = 2
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -33,7 +33,8 @@ class ProductCell: UICollectionViewCell {
     
     private let priceLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .bold)
+        label.textAlignment = .left
+        label.font = .systemFont(ofSize: 16, weight: .bold)
         label.textColor = .black
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
@@ -47,14 +48,6 @@ class ProductCell: UICollectionViewCell {
         return button
     }()
     
-    private let containerView: UIView = {
-        let view = UIView()
-        view.backgroundColor = .white
-        view.layer.cornerRadius = 12
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
@@ -65,57 +58,61 @@ class ProductCell: UICollectionViewCell {
     }
     
     private func setupUI() {
-        contentView.addSubview(containerView)
-        containerView.addSubview(imageView)
-        containerView.addSubview(nameLabel)
-        containerView.addSubview(priceLabel)
-        containerView.addSubview(favoriteButton)
+        contentView.backgroundColor = .white
+        contentView.layer.cornerRadius = 12
+        contentView.layer.shadowColor = UIColor.black.cgColor
+        contentView.layer.shadowOffset = CGSize(width: 0, height: 2)
+        contentView.layer.shadowRadius = 4
+        contentView.layer.shadowOpacity = 0.1
+        contentView.layer.masksToBounds = false
+        
+        contentView.addSubview(imageView)
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(priceLabel)
+        contentView.addSubview(favoriteButton)
         
         favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped), for: .touchUpInside)
         
         NSLayoutConstraint.activate([
-            containerView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
-            containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 4),
-            containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
-            containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            imageView.heightAnchor.constraint(equalTo: imageView.widthAnchor),
             
-            imageView.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 8),
-            imageView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
-            imageView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
-            imageView.heightAnchor.constraint(equalTo: containerView.widthAnchor, constant: -16),
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
             
-            favoriteButton.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
-            favoriteButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            priceLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 4),
+            priceLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 8),
+            priceLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -8),
+            priceLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -8),
+            
+            favoriteButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            favoriteButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
             favoriteButton.widthAnchor.constraint(equalToConstant: 32),
-            favoriteButton.heightAnchor.constraint(equalToConstant: 32),
-            
-            nameLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 8),
-            nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            nameLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
-            
-            priceLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
-            priceLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 12),
-            priceLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -12),
-            priceLabel.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -12)
+            favoriteButton.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
     
     override func prepareForReuse() {
         super.prepareForReuse()
         imageView.image = nil
-        nameLabel.text = nil
+        titleLabel.text = nil
         priceLabel.text = nil
         product = nil
     }
     
     func configure(with product: Product) {
         self.product = product
-        nameLabel.text = product.name
-        priceLabel.text = product.formattedPrice
+        titleLabel.text = product.name
+        priceLabel.text = "$\(product.price)"
         
-        ImageCacheService.shared.loadImage(from: product.imageUrl) { [weak self] image in
-            DispatchQueue.main.async {
-                self?.imageView.image = image
+        if let url = URL(string: product.imageUrl) {
+            ImageCacheService.shared.loadImage(from: product.imageUrl) { [weak self] image in
+                DispatchQueue.main.async {
+                    self?.imageView.image = image
+                }
             }
         }
         
@@ -137,15 +134,6 @@ class ProductCell: UICollectionViewCell {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        
-        containerView.layer.shadowColor = UIColor.black.cgColor
-        containerView.layer.shadowOffset = CGSize(width: 0, height: 2)
-        containerView.layer.shadowRadius = 4
-        containerView.layer.shadowOpacity = 0.08
-        containerView.layer.masksToBounds = false
-        
-        if containerView.layer.shadowPath == nil {
-            containerView.layer.shadowPath = UIBezierPath(roundedRect: containerView.bounds, cornerRadius: containerView.layer.cornerRadius).cgPath
-        }
+        contentView.layer.shadowPath = UIBezierPath(roundedRect: contentView.bounds, cornerRadius: contentView.layer.cornerRadius).cgPath
     }
 }

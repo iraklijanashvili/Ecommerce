@@ -16,13 +16,22 @@ class CollectionProductsViewModel: ObservableObject {
     
     private let db = Firestore.firestore()
     
+    private static var productCache: [String: [Product]] = [:]
+    
     func fetchProducts(forCollection collectionType: String) async {
         isLoading = true
         error = nil
         
+        let categoryId = collectionType.replacingOccurrences(of: "_collection", with: "collection")
+        
+        if let cachedProducts = Self.productCache[categoryId] {
+            print("Using cached products for categoryId: \(categoryId)")
+            products = cachedProducts
+            isLoading = false
+            return
+        }
+        
         do {
-            let categoryId = collectionType.replacingOccurrences(of: "_collection", with: "collection")
-            
             let snapshot = try await db.collection("products")
                 .whereField("categoryId", isEqualTo: categoryId)
                 .getDocuments()
@@ -30,7 +39,7 @@ class CollectionProductsViewModel: ObservableObject {
             print("Fetching products for categoryId: \(categoryId)")
             print("Found \(snapshot.documents.count) products")
             
-            products = snapshot.documents.compactMap { document in
+            let fetchedProducts = snapshot.documents.compactMap { document in
                 do {
                     var data = document.data()
                     data["id"] = document.documentID
@@ -40,11 +49,23 @@ class CollectionProductsViewModel: ObservableObject {
                     return nil
                 }
             }
+            
+            Self.productCache[categoryId] = fetchedProducts
+            products = fetchedProducts
+            
         } catch {
             print("Error fetching products: \(error)")
             self.error = error
         }
         
         isLoading = false
+    }
+    
+    func clearCache(for categoryId: String? = nil) {
+        if let categoryId = categoryId {
+            Self.productCache.removeValue(forKey: categoryId)
+        } else {
+            Self.productCache.removeAll()
+        }
     }
 } 

@@ -14,6 +14,12 @@ struct PriceRange {
     var max: Double
 }
 
+enum SortOption {
+    case none
+    case priceHighToLow
+    case priceLowToHigh
+}
+
 enum ProductCategory: String, CaseIterable {
     case jackets = "jackets"
     case hoodies = "hoodies"
@@ -58,12 +64,15 @@ struct FilterOptions {
     var priceRange: PriceRange
     var selectedColors: Set<ProductColor>
     var selectedCategories: Set<ProductCategory>
+    var sortBy: SortOption
     
     init(priceRange: PriceRange = PriceRange(min: 0, max: 1000),
          selectedColors: Set<ProductColor> = [],
-         selectedCategories: Set<ProductCategory> = []) {
+         selectedCategories: Set<ProductCategory> = [],
+         sortBy: SortOption = .none) {
         self.priceRange = priceRange
         self.selectedColors = selectedColors
         self.selectedCategories = selectedCategories
+        self.sortBy = sortBy
     }
 } 

@@ -65,6 +65,22 @@ class FilterViewController: UIViewController {
         return slider
     }()
     
+    private let sortingLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Sort By Price"
+        label.font = .systemFont(ofSize: 16, weight: .medium)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let sortingControl: UISegmentedControl = {
+        let items = ["None", "High to Low", "Low to High"]
+        let control = UISegmentedControl(items: items)
+        control.selectedSegmentIndex = 0
+        control.translatesAutoresizingMaskIntoConstraints = false
+        return control
+    }()
+    
     private let categoriesLabel: UILabel = {
         let label = UILabel()
         label.text = "Categories"
@@ -160,6 +176,8 @@ class FilterViewController: UIViewController {
         containerView.addSubview(priceLabel)
         containerView.addSubview(priceRangeLabel)
         containerView.addSubview(priceRangeSlider)
+        containerView.addSubview(sortingLabel)
+        containerView.addSubview(sortingControl)
         containerView.addSubview(categoriesLabel)
         containerView.addSubview(categoriesButton)
         containerView.addSubview(categoriesTableView)
@@ -172,12 +190,12 @@ class FilterViewController: UIViewController {
             containerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             containerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             containerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            containerView.heightAnchor.constraint(equalToConstant: 500),
+            containerView.heightAnchor.constraint(equalToConstant: 600),
             
-            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 20),
+            titleLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 16),
             titleLabel.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
             
-            priceLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 20),
+            priceLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 16),
             priceLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
             priceRangeLabel.topAnchor.constraint(equalTo: priceLabel.bottomAnchor, constant: 8),
@@ -187,34 +205,44 @@ class FilterViewController: UIViewController {
             priceRangeSlider.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             priceRangeSlider.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             
-            categoriesLabel.topAnchor.constraint(equalTo: priceRangeSlider.bottomAnchor, constant: 20),
+            sortingLabel.topAnchor.constraint(equalTo: priceRangeSlider.bottomAnchor, constant: 16),
+            sortingLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            
+            sortingControl.topAnchor.constraint(equalTo: sortingLabel.bottomAnchor, constant: 8),
+            sortingControl.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            sortingControl.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            sortingControl.heightAnchor.constraint(equalToConstant: 32),
+            
+            categoriesLabel.topAnchor.constraint(equalTo: sortingControl.bottomAnchor, constant: 16),
             categoriesLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
             categoriesButton.topAnchor.constraint(equalTo: categoriesLabel.bottomAnchor, constant: 8),
             categoriesButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             categoriesButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            categoriesButton.heightAnchor.constraint(equalToConstant: 40),
+            categoriesButton.heightAnchor.constraint(equalToConstant: 44),
             
-            categoriesTableView.topAnchor.constraint(equalTo: categoriesButton.bottomAnchor),
+            categoriesTableView.topAnchor.constraint(equalTo: categoriesButton.bottomAnchor, constant: 8),
             categoriesTableView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             categoriesTableView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             categoriesTableView.heightAnchor.constraint(equalToConstant: 120),
             
-            colorsLabel.topAnchor.constraint(equalTo: categoriesTableView.bottomAnchor, constant: 20),
+            colorsLabel.topAnchor.constraint(equalTo: categoriesTableView.bottomAnchor, constant: 16),
             colorsLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
             colorsCollectionView.topAnchor.constraint(equalTo: colorsLabel.bottomAnchor, constant: 8),
             colorsCollectionView.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             colorsCollectionView.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
-            colorsCollectionView.heightAnchor.constraint(equalToConstant: 40),
+            colorsCollectionView.heightAnchor.constraint(equalToConstant: 44),
             
-            resetButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
+            resetButton.topAnchor.constraint(equalTo: colorsCollectionView.bottomAnchor, constant: 24),
             resetButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            resetButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             resetButton.widthAnchor.constraint(equalToConstant: 80),
             resetButton.heightAnchor.constraint(equalToConstant: 44),
             
-            applyButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -20),
+            applyButton.topAnchor.constraint(equalTo: colorsCollectionView.bottomAnchor, constant: 24),
             applyButton.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            applyButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16),
             applyButton.widthAnchor.constraint(equalToConstant: 120),
             applyButton.heightAnchor.constraint(equalToConstant: 44)
         ])
@@ -235,6 +263,7 @@ class FilterViewController: UIViewController {
     private func setupActions() {
         categoriesButton.addTarget(self, action: #selector(categoriesButtonTapped), for: .touchUpInside)
         priceRangeSlider.addTarget(self, action: #selector(priceRangeChanged), for: .valueChanged)
+        sortingControl.addTarget(self, action: #selector(sortingChanged), for: .valueChanged)
         resetButton.addTarget(self, action: #selector(resetButtonTapped), for: .touchUpInside)
         applyButton.addTarget(self, action: #selector(applyButtonTapped), for: .touchUpInside)
     }
@@ -251,6 +280,17 @@ class FilterViewController: UIViewController {
     private func updateUI() {
         categoriesButton.setTitle(viewModel.categoriesButtonTitle, for: .normal)
         priceRangeLabel.text = viewModel.priceRangeText
+        priceRangeSlider.value = Float(viewModel.currentPriceRange.max)
+        
+        switch viewModel.currentSortOption {
+        case .none:
+            sortingControl.selectedSegmentIndex = 0
+        case .priceHighToLow:
+            sortingControl.selectedSegmentIndex = 1
+        case .priceLowToHigh:
+            sortingControl.selectedSegmentIndex = 2
+        }
+        
         colorsCollectionView.reloadData()
         categoriesTableView.reloadData()
     }
@@ -261,6 +301,19 @@ class FilterViewController: UIViewController {
     
     @objc private func priceRangeChanged() {
         viewModel.updatePriceRange(priceRangeSlider.value)
+    }
+    
+    @objc private func sortingChanged() {
+        switch sortingControl.selectedSegmentIndex {
+        case 0:
+            viewModel.updateSortOption(.none)
+        case 1:
+            viewModel.updateSortOption(.priceHighToLow)
+        case 2:
+            viewModel.updateSortOption(.priceLowToHigh)
+        default:
+            break
+        }
     }
     
     @objc private func resetButtonTapped() {
@@ -374,9 +427,15 @@ class ColorCell: UICollectionViewCell {
         view.layer.cornerRadius = 15
         view.layer.borderWidth = 2
         view.layer.borderColor = UIColor.clear.cgColor
+        view.layer.shadowColor = UIColor.gray.cgColor
+        view.layer.shadowOffset = CGSize(width: 0, height: 0)
+        view.layer.shadowRadius = 2
+        view.layer.shadowOpacity = 0.3
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
+    
+    private var colorViewConstraints: [NSLayoutConstraint] = []
     
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -389,23 +448,44 @@ class ColorCell: UICollectionViewCell {
     
     private func setupUI() {
         contentView.addSubview(colorView)
+        updateColorViewConstraints(isSelected: false)
+    }
+    
+    private func updateColorViewConstraints(isSelected: Bool) {
+        NSLayoutConstraint.deactivate(colorViewConstraints)
         
-        NSLayoutConstraint.activate([
+        let size: CGFloat = isSelected ? 34 : 30
+        
+        colorViewConstraints = [
             colorView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             colorView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            colorView.widthAnchor.constraint(equalToConstant: 30),
-            colorView.heightAnchor.constraint(equalToConstant: 30)
-        ])
+            colorView.widthAnchor.constraint(equalToConstant: size),
+            colorView.heightAnchor.constraint(equalToConstant: size)
+        ]
+        
+        NSLayoutConstraint.activate(colorViewConstraints)
     }
     
     func configure(with color: ProductColor, isSelected: Bool) {
         colorView.backgroundColor = color.uiColor
-        colorView.layer.borderColor = isSelected ? UIColor.black.cgColor : UIColor.clear.cgColor
+        
+        // Add gray border for white color
+        if color == .white {
+            colorView.layer.borderWidth = 1
+            colorView.layer.borderColor = UIColor.gray.cgColor
+        } else {
+            colorView.layer.borderWidth = isSelected ? 2 : 0
+            colorView.layer.borderColor = isSelected ? UIColor.black.cgColor : UIColor.clear.cgColor
+        }
+        
+        updateColorViewConstraints(isSelected: isSelected)
     }
     
     override func prepareForReuse() {
         super.prepareForReuse()
         colorView.backgroundColor = nil
         colorView.layer.borderColor = UIColor.clear.cgColor
+        colorView.layer.borderWidth = 0
+        updateColorViewConstraints(isSelected: false)
     }
 } 

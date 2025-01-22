@@ -5,7 +5,6 @@
 //  Created by Imac on 22.01.25.
 //
 
-
 import SwiftUI
 
 struct SharedErrorView: View {
