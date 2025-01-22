@@ -16,7 +16,11 @@ struct Category: Identifiable, Codable {
     let subcategories: [String: Subcategory]
     
     var subcategoryArray: [Subcategory] {
-        subcategories.values.sorted { $0.itemCount > $1.itemCount }
+        var array = Array(subcategories.values)
+        let allSubcategory = Subcategory(id: "all", name: "All", itemCount: array.reduce(0) { $0 + $1.itemCount })
+        array.insert(allSubcategory, at: 0)
+        let sortedSubcategories = array[1...].sorted { $0.itemCount > $1.itemCount }
+        return [allSubcategory] + sortedSubcategories
     }
     
     struct Subcategory: Codable {

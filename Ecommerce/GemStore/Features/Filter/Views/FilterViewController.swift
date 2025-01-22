@@ -469,7 +469,6 @@ class ColorCell: UICollectionViewCell {
     func configure(with color: ProductColor, isSelected: Bool) {
         colorView.backgroundColor = color.uiColor
         
-        // Add gray border for white color
         if color == .white {
             colorView.layer.borderWidth = 1
             colorView.layer.borderColor = UIColor.gray.cgColor

@@ -247,15 +247,57 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
                 sectionsToReload.insert(previousSection)
             }
             
-            UIView.performWithoutAnimation {
-                collectionView.reloadSections(sectionsToReload)
+            let isLastCategory = indexPath.section == viewModel.categories.count - 1
+            
+            UIView.animate(withDuration: 0.3) { [weak self] in
+                self?.collectionView.performBatchUpdates({
+                    self?.collectionView.reloadSections(sectionsToReload)
+                }) { _ in
+                    if !wasExpanded {
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self = self else { return }
+                            
+                            let targetIndexPath = IndexPath(item: 1, section: indexPath.section)
+                            if let attributes = self.collectionView.layoutAttributesForItem(at: targetIndexPath) {
+                                let targetRect = attributes.frame
+                                
+                                if isLastCategory {
+                                    let extraScroll: CGFloat = 200
+                                    let adjustedRect = CGRect(
+                                        x: targetRect.origin.x,
+                                        y: targetRect.origin.y,
+                                        width: targetRect.width,
+                                        height: targetRect.height + extraScroll
+                                    )
+                                    self.collectionView.scrollRectToVisible(adjustedRect, animated: true)
+                                } else {
+                                    self.collectionView.scrollRectToVisible(targetRect, animated: true)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         } else {
             expandedCategoryId = nil
             let subcategory = category.subcategoryArray[indexPath.item - 1]
             currentCategoryId = subcategory.id
-            viewModel.resetFilter()
-            viewModel.fetchProducts(for: subcategory.id)
+            
+            print("\n🔍 Selected subcategory:")
+            print("- Category ID: \(category.id)")
+            print("- Subcategory ID: \(subcategory.id)")
+            print("- Subcategory name: \(subcategory.name)")
+            
+            if subcategory.name.lowercased() == "all" {
+                print("📦 Fetching all products for category: \(category.id)")
+                let fullPath = "\(category.id)/all"
+                viewModel.fetchProducts(for: fullPath)
+            } else {
+                print("🔍 Fetching products for subcategory: \(subcategory.id)")
+                let fullPath = subcategory.id.lowercased()
+                viewModel.fetchProducts(for: fullPath)
+            }
+            
             isShowingFilteredProducts = true
             searchView.setBackButtonVisible(true)
             collectionView.reloadData()

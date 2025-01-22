@@ -106,11 +106,31 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func fetchProducts(for categoryId: String) {
         Task {
             do {
-                let fetchedProducts = try await repository.fetchProducts(for: categoryId)
-                await MainActor.run { [weak self] in
-                    guard let self = self else { return }
-                    self.products = fetchedProducts
-                    self.applyCurrentFilter()
+                let components = categoryId.components(separatedBy: "/")
+                let mainCategory = components[0]
+                let isAllSubcategory = components.count == 2 && components[1].lowercased() == "all"
+                
+                print("\n🔍 DEBUG - Category request in ViewModel:")
+                print("- Full categoryId: \(categoryId)")
+                print("- Components: \(components)")
+                print("- Main category: \(mainCategory)")
+                print("- Is 'all' subcategory: \(isAllSubcategory)")
+                
+                if isAllSubcategory {
+                    let fetchedProducts = try await repository.fetchProducts(for: categoryId)
+                    await MainActor.run { [weak self] in
+                        guard let self = self else { return }
+                        self.products = fetchedProducts
+                        self.filteredProducts = fetchedProducts
+                        self.onProductsUpdated?()
+                    }
+                } else {
+                    let fetchedProducts = try await repository.fetchProducts(for: categoryId)
+                    await MainActor.run { [weak self] in
+                        guard let self = self else { return }
+                        self.products = fetchedProducts
+                        self.applyCurrentFilter()
+                    }
                 }
             } catch {
                 await MainActor.run { [weak self] in

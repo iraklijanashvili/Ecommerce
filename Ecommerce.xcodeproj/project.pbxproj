@@ -12,7 +12,6 @@
 		883036A92D4137BE00B74B68 /* FirestoreRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830365B2D4137BE00B74B68 /* FirestoreRepository.swift */; };
 		883036AA2D4137BE00B74B68 /* AuthError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830365D2D4137BE00B74B68 /* AuthError.swift */; };
 		883036AB2D4137BE00B74B68 /* CollectionType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830365E2D4137BE00B74B68 /* CollectionType.swift */; };
-		883036AC2D4137BE00B74B68 /* წა.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8830365F2D4137BE00B74B68 /* წა.swift */; };
 		883036AD2D4137BE00B74B68 /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 883036602D4137BE00B74B68 /* Category.swift */; };
 		883036AE2D4137BE00B74B68 /* Product.swift in Sources */ = {isa = PBXBuildFile; fileRef = 883036612D4137BE00B74B68 /* Product.swift */; };
 		883036AF2D4137BE00B74B68 /* Banner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 883036622D4137BE00B74B68 /* Banner.swift */; };
@@ -77,7 +76,6 @@
 		8830365B2D4137BE00B74B68 /* FirestoreRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FirestoreRepository.swift; sourceTree = "<group>"; };
 		8830365D2D4137BE00B74B68 /* AuthError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AuthError.swift; sourceTree = "<group>"; };
 		8830365E2D4137BE00B74B68 /* CollectionType.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CollectionType.swift; sourceTree = "<group>"; };
-		8830365F2D4137BE00B74B68 /* წა.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "წა.swift"; sourceTree = "<group>"; };
 		883036602D4137BE00B74B68 /* Category.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
 		883036612D4137BE00B74B68 /* Product.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Product.swift; sourceTree = "<group>"; };
 		883036622D4137BE00B74B68 /* Banner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Banner.swift; sourceTree = "<group>"; };
@@ -219,7 +217,6 @@
 			children = (
 				8830365D2D4137BE00B74B68 /* AuthError.swift */,
 				8830365E2D4137BE00B74B68 /* CollectionType.swift */,
-				8830365F2D4137BE00B74B68 /* წა.swift */,
 				883036602D4137BE00B74B68 /* Category.swift */,
 				883036612D4137BE00B74B68 /* Product.swift */,
 				883036622D4137BE00B74B68 /* Banner.swift */,
@@ -623,7 +620,6 @@
 				883036C52D4137BE00B74B68 /* CategoryCell.swift in Sources */,
 				883036D22D4137BE00B74B68 /* ProductDetailsViewModel.swift in Sources */,
 				883036D52D4137BE00B74B68 /* FilterOptions.swift in Sources */,
-				883036AC2D4137BE00B74B68 /* წა.swift in Sources */,
 				883036CC2D4137BE00B74B68 /* SignUpViewModel.swift in Sources */,
 				883036B92D4137BE00B74B68 /* GemStoreApp.swift in Sources */,
 				883036CF2D4137BE00B74B68 /* LoginViewController.swift in Sources */,

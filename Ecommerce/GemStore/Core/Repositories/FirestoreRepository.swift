@@ -58,9 +58,19 @@ class FirestoreRepositoryImpl: FirestoreRepository {
         return try snapshot.documents.compactMap { document -> Product? in
             var data = document.data()
             data["id"] = document.documentID
+            
+            if data["mainCategoryId"] == nil {
+                if let categoryId = data["categoryId"] as? String {
+                    let components = categoryId.components(separatedBy: "/")
+                    data["mainCategoryId"] = components[0]
+                }
+            }
+            
             do {
                 let product = try Firestore.Decoder().decode(Product.self, from: data)
                 print("Successfully decoded product: \(product.id)")
+                print("- mainCategoryId: \(product.mainCategoryId)")
+                print("- categoryId: \(product.categoryId)")
                 return product
             } catch {
                 print("Error decoding product document \(document.documentID): \(error)")
