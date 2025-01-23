@@ -10,6 +10,7 @@ import SwiftUI
 
 struct CartView: View {
     @StateObject private var viewModel: CartViewModel = CartViewModel()
+    @State private var showingCheckout = false
     
     var body: some View {
         NavigationView {
@@ -64,9 +65,7 @@ struct CartView: View {
                                         .bold()
                                 }
                                 
-                                Button(action: {
-                                    viewModel.proceedToCheckout()
-                                }) {
+                                Button(action: { showingCheckout = true }) {
                                     Text("Proceed to checkout")
                                         .font(.headline)
                                         .foregroundColor(.white)
@@ -87,6 +86,9 @@ struct CartView: View {
             }
             .navigationTitle("Your Cart")
             .background(Color(.systemGray6))
+        }
+        .sheet(isPresented: $showingCheckout) {
+            CheckoutView()
         }
     }
 }

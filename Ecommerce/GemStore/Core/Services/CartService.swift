@@ -10,7 +10,9 @@ import Combine
 import FirebaseFirestore
 import FirebaseAuth
 
-protocol CartService {
+typealias CartService = CartServiceProtocol
+
+protocol CartServiceProtocol {
     var items: [CartItem] { get }
     var itemsPublisher: AnyPublisher<[CartItem], Never> { get }
     var totalPrice: Double { get }
@@ -22,7 +24,7 @@ protocol CartService {
     func clearCart()
 }
 
-class CartServiceImpl: CartService {
+class CartServiceImpl: CartServiceProtocol {
     static let shared = CartServiceImpl()
     
     private let db = Firestore.firestore()

@@ -26,7 +26,7 @@ class CartViewModel: CartViewModelProtocol, ObservableObject {
     @Published private(set) var totalPrice: Double = 0
     let shipping = "Freeship"
     
-    private let cartService: CartService
+    private let cartService: CartServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
     var itemsPublisher: AnyPublisher<[CartItem], Never> {
@@ -37,7 +37,7 @@ class CartViewModel: CartViewModelProtocol, ObservableObject {
         $totalPrice.eraseToAnyPublisher()
     }
     
-    init(cartService: CartService = CartServiceImpl.shared) {
+    init(cartService: CartServiceProtocol = CartServiceImpl.shared) {
         self.cartService = cartService
         setupBindings()
     }

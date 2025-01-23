@@ -36,7 +36,7 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
     @Published var isAddToCartEnabled: Bool = false
     
     private let favoritesService: FavoritesService
-    private let cartService: CartService
+    private let cartService: CartServiceProtocol
     private var cancellables = Set<AnyCancellable>()
     
     weak var delegate: ProductDetailsViewModelDelegate?
@@ -56,7 +56,7 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
     init(
         product: Product,
         favoritesService: FavoritesService = FavoritesServiceImpl.shared,
-        cartService: CartService = CartServiceImpl.shared
+        cartService: CartServiceProtocol = CartServiceImpl.shared
     ) {
         self.product = product
         self.favoritesService = favoritesService
