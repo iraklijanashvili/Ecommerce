@@ -34,7 +34,7 @@ enum ProductCategory: String, CaseIterable {
     }
 }
 
-enum ProductColor: String, CaseIterable {
+enum ProductColor: String, CaseIterable, Codable {
     case black = "black"
     case blue = "blue"
     case red = "red"

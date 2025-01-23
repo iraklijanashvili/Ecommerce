@@ -15,28 +15,28 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             HomeView()
                 .tabItem {
-                    Image(systemName: "house.fill")
+                    Image(systemName: selectedTab == 0 ? "house.fill" : "house")
                     Text("Home")
                 }
                 .tag(0)
             
             DiscoverViewControllerRepresentable()
                 .tabItem {
-                    Image(systemName: "magnifyingglass")
+                    Image(systemName: selectedTab == 1 ? "magnifyingglass.circle.fill" : "magnifyingglass.circle")
                     Text("Discover")
                 }
                 .tag(1)
             
-            Text("Favorites")
+            CartView()
                 .tabItem {
-                    Image(systemName: "heart.fill")
-                    Text("Favorites")
+                    Image(systemName: selectedTab == 2 ? "cart.fill" : "cart")
+                    Text("Cart")
                 }
                 .tag(2)
             
             ProfileView()
                 .tabItem {
-                    Image(systemName: "person.fill")
+                    Image(systemName: selectedTab == 3 ? "person.fill" : "person")
                     Text("Profile")
                 }
                 .tag(3)

@@ -80,8 +80,18 @@ struct SharedProductDetailView: View {
         return ProductDetailsViewControllerWrapper(viewModel: viewModel, 
                                                  presentationMode: presentationMode,
                                                  isFromHomePage: isFromHomePage)
-            .navigationBarTitle("New Collection")
-            .foregroundColor(.black)
+            .navigationBarBackButtonHidden(true)
+            .navigationBarItems(leading: Button(action: {
+                presentationMode.wrappedValue.dismiss()
+            }) {
+                HStack {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.black)
+                    Text("Back")
+                        .foregroundColor(.black)
+                }
+            })
+            .navigationBarTitle("Product Details", displayMode: .inline)
     }
 }
 
@@ -95,13 +105,7 @@ struct ProductDetailsViewControllerWrapper: UIViewControllerRepresentable {
         if isFromHomePage {
             viewController.hideDefaultNavigationItems = true
         }
-        let navigationController = UINavigationController(rootViewController: viewController)
-        navigationController.navigationBar.isHidden = false
-        if isFromHomePage {
-            navigationController.navigationBar.tintColor = .black
-            navigationController.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.black]
-        }
-        return navigationController
+        return viewController
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {

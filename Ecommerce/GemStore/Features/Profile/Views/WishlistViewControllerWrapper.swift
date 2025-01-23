@@ -1,3 +1,10 @@
+//
+//  WishlistViewModel.swift
+//  Ecommerce
+//
+//  Created by Imac on 23.01.25.
+//
+
 import SwiftUI
 
 struct WishlistViewControllerWrapper: UIViewControllerRepresentable {

@@ -35,7 +35,7 @@ struct ProductSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
                     ForEach(products) { product in
-                        NavigationLink(destination: ProductDetailView(product: product)) {
+                        NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: true)) {
                             switch style {
                             case .regular:
                                 RegularProductCard(product: product)
@@ -214,14 +214,6 @@ private struct FeaturedProductCard: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-}
-
-private struct ProductDetailView: View {
-    let product: Product
-    
-    var body: some View {
-        Text("Product Detail: \(product.name)")
     }
 }
 

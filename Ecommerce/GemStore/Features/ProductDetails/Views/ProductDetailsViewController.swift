@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import Combine
 
 class ProductDetailsViewController: UIViewController {
     private let viewModel: ProductDetailsViewModelProtocol
@@ -98,15 +99,47 @@ class ProductDetailsViewController: UIViewController {
         return collectionView
     }()
     
-    private let addToCartButton: UIButton = {
+    private lazy var addToCartButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Add to Cart", for: .normal)
-        button.backgroundColor = .black
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .bold)
         button.setTitleColor(.white, for: .normal)
-        button.layer.cornerRadius = 8
+        button.backgroundColor = .black
+        button.layer.cornerRadius = 25
+        button.addTarget(self, action: #selector(addToCartTapped), for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
+        button.isEnabled = false
         return button
     }()
+    
+    private let addToCartAnimationView: UIView = {
+        let view = UIView()
+        view.backgroundColor = .black
+        view.alpha = 0
+        view.layer.cornerRadius = 25
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+    
+    private let addToCartAnimationLabel: UILabel = {
+        let label = UILabel()
+        label.text = "Added to Cart"
+        label.textColor = .white
+        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
+    
+    private let addToCartAnimationIcon: UIImageView = {
+        let imageView = UIImageView()
+        imageView.image = UIImage(systemName: "checkmark.circle.fill")
+        imageView.tintColor = .white
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        return imageView
+    }()
+    
+    private var cancellables: Set<AnyCancellable> = []
     
     init(viewModel: ProductDetailsViewModelProtocol) {
         self.viewModel = viewModel
@@ -127,6 +160,8 @@ class ProductDetailsViewController: UIViewController {
         setupUI()
         setupCollectionViews()
         setupActions()
+        setupBindings()
+        setupAddToCartAnimation()
         updateUI()
         (viewModel as? ProductDetailsViewModel)?.delegate = self
     }
@@ -243,6 +278,52 @@ class ProductDetailsViewController: UIViewController {
         favoriteButton.addTarget(self, action: #selector(favoriteButtonTapped), for: .touchUpInside)
     }
     
+    private func setupBindings() {
+        viewModel.isAddToCartEnabledPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] isEnabled in
+                self?.addToCartButton.isEnabled = isEnabled
+                self?.addToCartButton.backgroundColor = isEnabled ? .black : .gray
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func setupAddToCartAnimation() {
+        view.addSubview(addToCartAnimationView)
+        addToCartAnimationView.addSubview(addToCartAnimationLabel)
+        addToCartAnimationView.addSubview(addToCartAnimationIcon)
+        
+        NSLayoutConstraint.activate([
+            addToCartAnimationView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            addToCartAnimationView.bottomAnchor.constraint(equalTo: addToCartButton.topAnchor, constant: -20),
+            addToCartAnimationView.widthAnchor.constraint(equalToConstant: 200),
+            addToCartAnimationView.heightAnchor.constraint(equalToConstant: 50),
+            
+            addToCartAnimationIcon.leadingAnchor.constraint(equalTo: addToCartAnimationView.leadingAnchor, constant: 20),
+            addToCartAnimationIcon.centerYAnchor.constraint(equalTo: addToCartAnimationView.centerYAnchor),
+            addToCartAnimationIcon.widthAnchor.constraint(equalToConstant: 24),
+            addToCartAnimationIcon.heightAnchor.constraint(equalToConstant: 24),
+            
+            addToCartAnimationLabel.leadingAnchor.constraint(equalTo: addToCartAnimationIcon.trailingAnchor, constant: 12),
+            addToCartAnimationLabel.centerYAnchor.constraint(equalTo: addToCartAnimationView.centerYAnchor)
+        ])
+    }
+    
+    private func showAddToCartAnimation() {
+        addToCartAnimationView.transform = CGAffineTransform(translationX: 0, y: 50)
+        addToCartAnimationView.alpha = 0
+        
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0.5, options: [], animations: {
+            self.addToCartAnimationView.transform = .identity
+            self.addToCartAnimationView.alpha = 1
+        }) { _ in
+            UIView.animate(withDuration: 0.3, delay: 1.0, options: [], animations: {
+                self.addToCartAnimationView.alpha = 0
+                self.addToCartAnimationView.transform = CGAffineTransform(translationX: 0, y: -20)
+            })
+        }
+    }
+    
     private func updateUI() {
         let product = viewModel.product
         nameLabel.text = product.name
@@ -271,6 +352,11 @@ class ProductDetailsViewController: UIViewController {
     
     @objc private func favoriteButtonTapped() {
         viewModel.toggleFavorite()
+    }
+    
+    @objc private func addToCartTapped() {
+        viewModel.addToCart()
+        showAddToCartAnimation()
     }
 }
 
