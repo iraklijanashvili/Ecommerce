@@ -9,6 +9,7 @@ import UIKit
 
 class DiscoverViewController: UIViewController {
     private let viewModel: DiscoverViewModelProtocol
+    private let favoritesService: FavoritesService
     private var isShowingFilteredProducts = false
     private var currentCategoryId: String?
     private var expandedCategoryId: String?
@@ -26,8 +27,10 @@ class DiscoverViewController: UIViewController {
         return collectionView
     }()
     
-    init(viewModel: DiscoverViewModelProtocol = DiscoverViewModel()) {
+    init(viewModel: DiscoverViewModelProtocol = DiscoverViewModel(), 
+         favoritesService: FavoritesService = FavoritesServiceImpl.shared) {
         self.viewModel = viewModel
+        self.favoritesService = favoritesService
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -169,17 +172,12 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if isShowingFilteredProducts {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCell", for: indexPath) as! ProductCell
-            let product = viewModel.filteredProducts[indexPath.item]
-            cell.configure(with: product)
-            cell.onFavoriteToggle = { [weak self] product in
-                if FavoritesServiceImpl.shared.isFavorite(productId: product.id) {
-                    FavoritesServiceImpl.shared.removeFavorite(productId: product.id)
-                } else {
-                    FavoritesServiceImpl.shared.addFavorite(product: product)
-                }
-                cell.configure(with: product)
+            guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCell", for: indexPath) as? ProductCell else {
+                return UICollectionViewCell()
             }
+            
+            let product = viewModel.filteredProducts[indexPath.item]
+            cell.configure(with: product, showFavorite: false)
             return cell
         }
         

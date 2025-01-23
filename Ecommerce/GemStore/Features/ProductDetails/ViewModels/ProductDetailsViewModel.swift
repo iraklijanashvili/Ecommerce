@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 protocol ProductDetailsViewModelDelegate: AnyObject {
     func productDetailsViewModelDidUpdate()
@@ -25,17 +26,18 @@ protocol ProductDetailsViewModelProtocol {
     func toggleFavorite()
 }
 
+@MainActor
 class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject {
     @Published var product: Product
     @Published var selectedColor: ProductColor?
     @Published var selectedSize: String?
+    @Published var isFavorite: Bool = false
+    @Published var isAddToCartEnabled: Bool = false
+    
     private let favoritesService: FavoritesService
+    private var cancellables = Set<AnyCancellable>()
     
     weak var delegate: ProductDetailsViewModelDelegate?
-    
-    var isFavorite: Bool {
-        favoritesService.isFavorite(productId: product.id)
-    }
     
     var availableColors: [ProductColor] {
         product.colors?.compactMap { ProductColor.fromString($0) } ?? []
@@ -45,22 +47,38 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
         product.sizes ?? []
     }
     
-    var isAddToCartEnabled: Bool {
-        guard let selectedColor = selectedColor,
-              let selectedSize = selectedSize else {
-            return false
-        }
-        return product.isAvailable(color: selectedColor.rawValue, size: selectedSize)
-    }
-    
     init(product: Product, favoritesService: FavoritesService = FavoritesServiceImpl.shared) {
         self.product = product
         self.favoritesService = favoritesService
-        if let firstColor = availableColors.first {
-            self.selectedColor = firstColor
+        
+        Task {
+            await checkFavoriteStatus()
         }
-        if let firstSize = availableSizes.first {
-            self.selectedSize = firstSize
+        
+        setupBindings()
+    }
+    
+    private func setupBindings() {
+        Publishers.CombineLatest($selectedColor, $selectedSize)
+            .map { color, size in
+                guard let color = color,
+                      let size = size,
+                      let inventory = self.product.inventory,
+                      let sizeInventory = inventory[color.rawValue],
+                      let quantity = sizeInventory[size] else {
+                    return false
+                }
+                return quantity > 0
+            }
+            .assign(to: &$isAddToCartEnabled)
+    }
+    
+    private func checkFavoriteStatus() async {
+        do {
+            isFavorite = try await favoritesService.isFavorite(productId: product.id)
+        } catch {
+            print("Error checking favorite status: \(error)")
+            isFavorite = false
         }
     }
     
@@ -75,11 +93,18 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
     }
     
     func toggleFavorite() {
-        if isFavorite {
-            favoritesService.removeFavorite(productId: product.id)
-        } else {
-            favoritesService.addFavorite(product: product)
+        Task {
+            do {
+                if isFavorite {
+                    try await favoritesService.removeFavorite(productId: product.id)
+                } else {
+                    try await favoritesService.addFavorite(product: product)
+                }
+                isFavorite.toggle()
+                delegate?.productDetailsViewModelDidUpdate()
+            } catch {
+                print("Error toggling favorite: \(error)")
+            }
         }
-        delegate?.productDetailsViewModelDidUpdate()
     }
 } 

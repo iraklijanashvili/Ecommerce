@@ -66,7 +66,27 @@ struct ProfileView: View {
                         
                         ProfileMenuItem(icon: "creditcard", title: "Payment Method", destination: Text("Payment Method"))
                         
-                        ProfileMenuItem(icon: "heart", title: "My Wishlist", destination: Text("My Wishlist"))
+                        NavigationLink {
+                            WishlistViewControllerWrapper()
+                                .navigationBarTitleDisplayMode(.inline)
+                        } label: {
+                            HStack {
+                                Image(systemName: "heart")
+                                    .font(.title3)
+                                    .foregroundColor(.black)
+                                
+                                Text("My Wishlist")
+                                    .foregroundColor(.black)
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                        }
+                        Divider()
+                            .padding(.horizontal)
                         
                         Button(action: {
                             viewModel.signOut()

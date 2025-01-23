@@ -10,6 +10,11 @@ import UIKit
 class ProductCell: UICollectionViewCell {
     private var product: Product?
     private let favoritesService = FavoritesServiceImpl.shared
+    var showFavoriteButton: Bool = false {
+        didSet {
+            favoriteButton.isHidden = !showFavoriteButton
+        }
+    }
     
     var onFavoriteToggle: ((Product) -> Void)?
     
@@ -44,6 +49,7 @@ class ProductCell: UICollectionViewCell {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "heart"), for: .normal)
         button.tintColor = .red
+        button.isHidden = true
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -103,8 +109,9 @@ class ProductCell: UICollectionViewCell {
         product = nil
     }
     
-    func configure(with product: Product) {
+    func configure(with product: Product, showFavorite: Bool = false) {
         self.product = product
+        self.showFavoriteButton = showFavorite
         titleLabel.text = product.name
         priceLabel.text = "$\(product.price)"
         
@@ -116,20 +123,44 @@ class ProductCell: UICollectionViewCell {
             }
         }
         
-        updateFavoriteButton()
+        if showFavorite {
+            updateFavoriteButton()
+        }
     }
     
     private func updateFavoriteButton() {
         guard let product = product else { return }
-        let isFavorite = favoritesService.isFavorite(productId: product.id)
-        let imageName = isFavorite ? "heart.fill" : "heart"
-        favoriteButton.setImage(UIImage(systemName: imageName), for: .normal)
+        Task {
+            do {
+                let isFavorite = try await favoritesService.isFavorite(productId: product.id)
+                DispatchQueue.main.async { [weak self] in
+                    let imageName = isFavorite ? "heart.fill" : "heart"
+                    self?.favoriteButton.setImage(UIImage(systemName: imageName), for: .normal)
+                }
+            } catch {
+                print("Error checking favorite status: \(error)")
+            }
+        }
     }
     
     @objc private func favoriteButtonTapped() {
         guard let product = product else { return }
-        onFavoriteToggle?(product)
-        updateFavoriteButton()
+        Task {
+            do {
+                let isFavorite = try await favoritesService.isFavorite(productId: product.id)
+                if isFavorite {
+                    try await favoritesService.removeFavorite(productId: product.id)
+                } else {
+                    try await favoritesService.addFavorite(product: product)
+                }
+                await MainActor.run {
+                    onFavoriteToggle?(product)
+                    updateFavoriteButton()
+                }
+            } catch {
+                print("Error toggling favorite: \(error)")
+            }
+        }
     }
     
     override func layoutSubviews() {

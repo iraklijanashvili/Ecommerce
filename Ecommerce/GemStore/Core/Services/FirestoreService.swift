@@ -15,6 +15,7 @@ protocol FirestoreService {
     func getProducts(for categoryId: String) async throws -> [Product]
     func getFeaturedProducts(from products: [Product]) -> [Product]
     func getRecommendedProducts(from products: [Product]) -> [Product]
+    func getProducts(byIds productIds: [String]) async throws -> [Product]
 }
 
 class FirestoreServiceImpl: FirestoreService {
@@ -123,5 +124,29 @@ class FirestoreServiceImpl: FirestoreService {
     
     func getRecommendedProducts(from products: [Product]) -> [Product] {
         return products.filter { $0.isRecommended }
+    }
+    
+    func getProducts(byIds productIds: [String]) async throws -> [Product] {
+        guard !productIds.isEmpty else { return [] }
+        
+        let chunkedIds = stride(from: 0, to: productIds.count, by: 10).map {
+            Array(productIds[$0..<min($0 + 10, productIds.count)])
+        }
+        
+        var allProducts: [Product] = []
+        
+        for chunk in chunkedIds {
+            let snapshot = try await db.collection("products")
+                .whereField(FieldPath.documentID(), in: chunk)
+                .getDocuments()
+            
+            let products = snapshot.documents.compactMap { document -> Product? in
+                try? document.data(as: Product.self)
+            }
+            
+            allProducts.append(contentsOf: products)
+        }
+        
+        return allProducts
     }
 } 
