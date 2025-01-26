@@ -14,28 +14,43 @@ struct CheckoutView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
-                navigationBar
-                
-                progressIndicator
-                    .padding(.horizontal)
-                
-                shippingForm
-                    .padding(.horizontal)
-                
-                shippingMethods
-                    .padding(.horizontal)
-                
-                totalSection
-                    .padding(.horizontal)
-                
-                continueButton
-                    .padding(.horizontal)
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding()
+            } else {
+                VStack(spacing: 24) {
+                    navigationBar
+                    
+                    progressIndicator
+                        .padding(.horizontal)
+                    
+                    shippingForm
+                        .padding(.horizontal)
+                    
+                    shippingMethods
+                        .padding(.horizontal)
+                    
+                    totalSection
+                        .padding(.horizontal)
+                    
+                    continueButton
+                        .padding(.horizontal)
+                }
+                .padding(.vertical)
             }
-            .padding(.vertical)
         }
         .background(Color(.systemGroupedBackground))
         .navigationBarHidden(true)
+        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
+            Button("OK") {
+                viewModel.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+            }
+        }
     }
     
     private var navigationBar: some View {

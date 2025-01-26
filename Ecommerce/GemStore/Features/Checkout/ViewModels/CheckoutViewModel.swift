@@ -23,41 +23,52 @@ class CheckoutViewModel: ObservableObject {
     @Published var formErrors: [String: String] = [:]
     @Published var showValidationAlert = false
     
-    let countries = ["Georgia", "United States", "United Kingdom", "Germany", 
-                    "France", "Italy", "Spain", "Japan", "Canada", "Australia"]
-    
-    let shippingMethods: [ShippingMethod] = [
-        ShippingMethod(
-            title: "Free",
-            description: "Delivery to home",
-            price: 0,
-            deliveryTime: "Delivery from 5 to 7 business days"
-        ),
-        ShippingMethod(
-            title: "$ 9.90",
-            description: "Delivery to home",
-            price: 9.90,
-            deliveryTime: "Delivery from 2 to 4 business days"
-        ),
-        ShippingMethod(
-            title: "$ 9.90",
-            description: "Fast Delivery",
-            price: 9.90,
-            deliveryTime: "Delivery from 2 to 3 business days"
-        )
-    ]
+    @Published var countries: [String] = []
+    @Published var shippingMethods: [ShippingMethod] = []
+    @Published var isLoading = false
+    @Published var errorMessage: String?
     
     private var cancellables = Set<AnyCancellable>()
     private let userService: UserServiceProtocol
     let cartService: CartServiceProtocol
+    private let shippingService: ShippingServiceProtocol
     
-    init(userService: UserServiceProtocol = UserService(), 
-         cartService: CartServiceProtocol = CartServiceImpl.shared) {
+    init(
+        userService: UserServiceProtocol = UserService(),
+        cartService: CartServiceProtocol = CartServiceImpl.shared,
+        shippingService: ShippingServiceProtocol = ShippingService()
+    ) {
         self.userService = userService
         self.cartService = cartService
+        self.shippingService = shippingService
         
         loadUserData()
         setupTotalAmountCalculation()
+        Task {
+            await loadShippingData()
+        }
+    }
+    
+    private func loadShippingData() async {
+        isLoading = true
+        do {
+            async let countriesTask = shippingService.fetchCountries()
+            async let methodsTask = shippingService.fetchShippingMethods()
+            
+            let (countries, methods) = try await (countriesTask, methodsTask)
+            
+            await MainActor.run {
+                self.countries = countries
+                self.shippingMethods = methods
+                self.selectedCountry = countries.first ?? "Georgia"
+                isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                isLoading = false
+            }
+        }
     }
     
     private func loadUserData() {

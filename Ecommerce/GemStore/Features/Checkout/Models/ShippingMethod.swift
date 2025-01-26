@@ -6,9 +6,10 @@
 //
 
 import Foundation
+import FirebaseFirestore
 
-struct ShippingMethod: Identifiable, Equatable {
-    let id = UUID()
+struct ShippingMethod: Identifiable, Equatable, Codable {
+    let id: String
     let title: String
     let description: String
     let price: Double

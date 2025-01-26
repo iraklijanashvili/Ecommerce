@@ -64,7 +64,7 @@ struct ProfileView: View {
                     VStack(spacing: 0) {
                         ProfileMenuItem(icon: "mappin.and.ellipse", title: "Address", destination: Text("Address"))
                         
-                        ProfileMenuItem(icon: "creditcard", title: "Payment Method", destination: Text("Payment Method"))
+                        ProfileMenuItem(icon: "creditcard", title: "Payment Method", destination: PaymentView())
                         
                         NavigationLink {
                             WishlistViewControllerWrapper()
@@ -154,4 +154,4 @@ struct ProfileMenuItem<Destination: View>: View {
         Divider()
             .padding(.horizontal)
     }
-} 
+}

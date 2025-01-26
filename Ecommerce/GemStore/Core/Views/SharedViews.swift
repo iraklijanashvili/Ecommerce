@@ -76,22 +76,19 @@ struct SharedProductDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        let viewModel = ProductDetailsViewModel(product: product)
-        return ProductDetailsViewControllerWrapper(viewModel: viewModel, 
+        NavigationView {
+            let viewModel = ProductDetailsViewModel(product: product)
+            ProductDetailsViewControllerWrapper(viewModel: viewModel, 
                                                  presentationMode: presentationMode,
                                                  isFromHomePage: isFromHomePage)
-            .navigationBarBackButtonHidden(true)
-            .navigationBarItems(leading: Button(action: {
-                presentationMode.wrappedValue.dismiss()
-            }) {
-                HStack {
+                .navigationBarItems(leading: Button(action: {
+                    presentationMode.wrappedValue.dismiss()
+                }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.black)
-                    Text("Back")
-                        .foregroundColor(.black)
-                }
-            })
-            .navigationBarTitle("Product Details", displayMode: .inline)
+                })
+                .navigationBarTitle("Product Details", displayMode: .inline)
+        }
     }
 }
 
@@ -109,5 +106,27 @@ struct ProductDetailsViewControllerWrapper: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+    }
+}
+
+struct CachedAsyncImage: View {
+    let url: String
+    let width: CGFloat
+    @State private var image: UIImage?
+    
+    var body: some View {
+        Group {
+            if let image = image {
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+            } else {
+                ProgressView()
+            }
+        }
+        .frame(width: width)
+        .task {
+            image = await ImageCacheService.shared.loadImage(from: url)
+        }
     }
 } 

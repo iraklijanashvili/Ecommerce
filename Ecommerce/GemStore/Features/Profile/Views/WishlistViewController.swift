@@ -170,4 +170,4 @@ extension WishlistViewController: UICollectionViewDataSource, UICollectionViewDe
         let productDetailsVC = ProductDetailsViewController(viewModel: viewModel)
         navigationController?.pushViewController(productDetailsVC, animated: true)
     }
-} 
+}
