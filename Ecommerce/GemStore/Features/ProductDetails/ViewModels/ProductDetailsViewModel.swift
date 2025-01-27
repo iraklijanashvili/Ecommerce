@@ -85,7 +85,7 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
             .assign(to: &$isAddToCartEnabled)
     }
     
-    private func checkFavoriteStatus() async {
+    func checkFavoriteStatus() async {
         do {
             let isFavorite = try await favoritesService.isFavorite(productId: product.id)
             await MainActor.run {

@@ -76,16 +76,34 @@ struct SharedProductDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        NavigationView {
-            let viewModel = ProductDetailsViewModel(product: product)
-            ProductDetailsViewControllerWrapper(viewModel: viewModel, 
+        if isFromHomePage {
+            NavigationView {
+                let viewModel = ProductDetailsViewModel(product: product)
+                ProductDetailsViewControllerWrapper(viewModel: viewModel, 
                                                  presentationMode: presentationMode,
                                                  isFromHomePage: isFromHomePage)
+                    .navigationBarBackButtonHidden(true)
+                    .navigationBarItems(leading: Button(action: {
+                        presentationMode.wrappedValue.dismiss()
+                    }) {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.black)
+                            .imageScale(.large)
+                    })
+                    .navigationBarTitle("Product Details", displayMode: .inline)
+            }
+        } else {
+            let viewModel = ProductDetailsViewModel(product: product)
+            ProductDetailsViewControllerWrapper(viewModel: viewModel, 
+                                             presentationMode: presentationMode,
+                                             isFromHomePage: isFromHomePage)
+                .navigationBarBackButtonHidden(true)
                 .navigationBarItems(leading: Button(action: {
                     presentationMode.wrappedValue.dismiss()
                 }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.black)
+                        .imageScale(.large)
                 })
                 .navigationBarTitle("Product Details", displayMode: .inline)
         }
@@ -99,9 +117,7 @@ struct ProductDetailsViewControllerWrapper: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> UIViewController {
         let viewController = ProductDetailsViewController(viewModel: viewModel)
-        if isFromHomePage {
-            viewController.hideDefaultNavigationItems = true
-        }
+        viewController.hideDefaultNavigationItems = true
         return viewController
     }
     

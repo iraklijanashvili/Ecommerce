@@ -166,16 +166,23 @@ class ProductDetailsViewController: UIViewController {
         (viewModel as? ProductDetailsViewModel)?.delegate = self
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        Task {
+            await (viewModel as? ProductDetailsViewModel)?.checkFavoriteStatus()
+            updateUI()
+        }
+    }
+    
     private func setupNavigationBar() {
         navigationController?.setNavigationBarHidden(false, animated: false)
-        if !hideDefaultNavigationItems {
-            let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.left"),
-                                           style: .plain,
-                                           target: self,
-                                           action: #selector(backButtonTapped))
-            backButton.tintColor = .black
-            navigationItem.leftBarButtonItem = backButton
-        }
+        let backButton = UIBarButtonItem(image: UIImage(systemName: "chevron.left"),
+                                       style: .plain,
+                                       target: self,
+                                       action: #selector(backButtonTapped))
+        backButton.tintColor = .black
+        navigationItem.leftBarButtonItem = backButton
+        navigationItem.hidesBackButton = true
     }
     
     @objc private func backButtonTapped() {

@@ -16,57 +16,58 @@ struct CollectionProductsView: View {
     
     var body: some View {
         ScrollView {
-            if viewModel.isLoading {
-                ProgressView()
-            } else if let error = viewModel.error {
-                SharedErrorView(error: error) {
-                    Task {
-                        await viewModel.fetchProducts(forCollection: collectionType)
-                    }
-                }
-            } else {
-                if viewModel.products.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "doc.text.magnifyingglass")
-                            .font(.system(size: 50))
-                            .foregroundColor(.gray)
-                        Text("No products found")
-                            .font(.headline)
-                            .foregroundColor(.gray)
-                    }
-                    .padding(.top, 100)
-                } else {
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 16) {
-                        ForEach(viewModel.products) { product in
-                            NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: isFromHomePage)) {
-                                SharedProductCard(product: product)
-                            }
-                        }
-                    }
-                    .padding()
-                }
-            }
-        }
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(false)
-        .toolbar {
-            if !isFromHomePage {
-                ToolbarItem(placement: .navigationBarLeading) {
+            VStack {
+                HStack {
                     Button(action: {
                         presentationMode.wrappedValue.dismiss()
                     }) {
-                        HStack {
-                            Image(systemName: "chevron.left")
-                            Text("Back")
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.black)
+                            .imageScale(.large)
+                    }
+                    Spacer()
+                    Text(title)
+                        .font(.headline)
+                    Spacer()
+                }
+                .padding()
+                
+                if viewModel.isLoading {
+                    ProgressView()
+                } else if let error = viewModel.error {
+                    SharedErrorView(error: error) {
+                        Task {
+                            await viewModel.fetchProducts(forCollection: collectionType)
                         }
+                    }
+                } else {
+                    if viewModel.products.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .font(.system(size: 50))
+                                .foregroundColor(.gray)
+                            Text("No products found")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.top, 100)
+                    } else {
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            ForEach(viewModel.products) { product in
+                                NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: false)) {
+                                    SharedProductCard(product: product)
+                                }
+                            }
+                        }
+                        .padding()
                     }
                 }
             }
         }
+        .navigationBarHidden(true)
         .onAppear {
             Task {
                 await viewModel.fetchProducts(forCollection: collectionType)

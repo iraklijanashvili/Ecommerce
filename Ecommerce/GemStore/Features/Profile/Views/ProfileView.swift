@@ -68,7 +68,10 @@ struct ProfileView: View {
                         
                         NavigationLink {
                             WishlistViewControllerWrapper()
+                                .navigationBarBackButtonHidden(true)
+                                .navigationBarHidden(false)
                                 .navigationBarTitleDisplayMode(.inline)
+                                .toolbar(.hidden, for: .navigationBar)
                         } label: {
                             HStack {
                                 Image(systemName: "heart")

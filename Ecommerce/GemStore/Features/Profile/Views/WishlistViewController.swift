@@ -78,11 +78,11 @@ class WishlistViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        setupNavigationBar()
         setupBindings()
     }
     
     private func setupUI() {
-        title = "My Wishlist"
         view.backgroundColor = .systemBackground
         
         view.addSubview(collectionView)
@@ -114,6 +114,50 @@ class WishlistViewController: UIViewController {
             loadingIndicator.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             loadingIndicator.centerYAnchor.constraint(equalTo: view.centerYAnchor)
         ])
+    }
+    
+    private func setupNavigationBar() {
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationItem.hidesBackButton = true
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.backButtonTitle = ""
+        navigationItem.backBarButtonItem = nil
+        
+        title = "My Wishlist"
+        navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.black]
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+        
+        navigationItem.rightBarButtonItems = nil
+        navigationItem.leftBarButtonItems = nil
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: false)
+        navigationController?.navigationBar.tintColor = .black
+        navigationItem.hidesBackButton = true
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.backButtonTitle = ""
+        navigationItem.backBarButtonItem = nil
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+        
+        navigationItem.rightBarButtonItems = nil
+        navigationItem.leftBarButtonItems = nil
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        navigationItem.hidesBackButton = true
+        navigationItem.leftBarButtonItem = nil
+        navigationItem.backButtonTitle = ""
+        navigationItem.backBarButtonItem = nil
+        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
+        
+        navigationItem.rightBarButtonItems = nil
+        navigationItem.leftBarButtonItems = nil
+        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
     
     private func setupBindings() {
@@ -168,6 +212,7 @@ extension WishlistViewController: UICollectionViewDataSource, UICollectionViewDe
         let product = viewModel.products[indexPath.item]
         let viewModel = ProductDetailsViewModel(product: product)
         let productDetailsVC = ProductDetailsViewController(viewModel: viewModel)
+        productDetailsVC.hideDefaultNavigationItems = true
         navigationController?.pushViewController(productDetailsVC, animated: true)
     }
 }
