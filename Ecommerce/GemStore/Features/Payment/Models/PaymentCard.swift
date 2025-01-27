@@ -8,13 +8,20 @@
 import Foundation
 import FirebaseFirestore
 
-
-struct PaymentCard: Identifiable, Codable {
+struct PaymentCard: Identifiable, Codable, Equatable {
     @DocumentID var id: String? = nil
     let cardNumber: String
     let cardholderName: String
     let expiryDate: String
     let cardType: CardType
+    
+    static func == (lhs: PaymentCard, rhs: PaymentCard) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.cardNumber == rhs.cardNumber &&
+        lhs.cardholderName == rhs.cardholderName &&
+        lhs.expiryDate == rhs.expiryDate &&
+        lhs.cardType == rhs.cardType
+    }
     
     enum CardType: String, Codable {
         case visa = "visa"
@@ -38,6 +45,31 @@ struct PaymentCard: Identifiable, Codable {
             return .amex
         default:
             return .visa
+        }
+    }
+    
+    var maskedNumber: String {
+        let lastFourDigits = String(cardNumber.suffix(4))
+        return "•••• •••• •••• \(lastFourDigits)"
+    }
+}
+
+enum CardType: String, Codable {
+    case visa
+    case mastercard
+    case amex
+    case unknown
+    
+    var icon: String {
+        switch self {
+        case .visa:
+            return "visa"
+        case .mastercard:
+            return "mastercard"
+        case .amex:
+            return "amex"
+        case .unknown:
+            return "creditcard"
         }
     }
 }

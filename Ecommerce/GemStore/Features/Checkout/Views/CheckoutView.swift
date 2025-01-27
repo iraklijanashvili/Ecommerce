@@ -5,42 +5,40 @@
 //  Created by Imac on 24.01.25.
 //
 
-
 import SwiftUI
+import Combine
 
 struct CheckoutView: View {
     @StateObject private var viewModel = CheckoutViewModel()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        ScrollView {
-            if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding()
-            } else {
+        VStack(spacing: 0) {
+            ScrollView {
                 VStack(spacing: 24) {
-                    navigationBar
-                    
-                    progressIndicator
+                    addressSection
                         .padding(.horizontal)
                     
-                    shippingForm
-                        .padding(.horizontal)
-                    
-                    shippingMethods
-                        .padding(.horizontal)
-                    
-                    totalSection
-                        .padding(.horizontal)
-                    
-                    continueButton
-                        .padding(.horizontal)
+                    NavigationLink(destination: CheckoutPaymentView(productPrice: viewModel.cartService.totalPrice)) {
+                        Text("Continue to payment")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.black)
+                            .cornerRadius(25)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom)
                 }
                 .padding(.vertical)
             }
         }
         .background(Color(.systemGroupedBackground))
+        .safeAreaInset(edge: .top) {
+            navigationBar
+        }
+        .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
         .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") {
@@ -73,6 +71,22 @@ struct CheckoutView: View {
         .background(Color(.systemBackground))
     }
     
+    private var addressSection: some View {
+        VStack(spacing: 24) {
+            progressIndicator
+                .padding(.horizontal)
+            
+            shippingForm
+                .padding(.horizontal)
+            
+            shippingMethods
+                .padding(.horizontal)
+            
+            totalSection
+                .padding(.horizontal)
+        }
+    }
+    
     private var progressIndicator: some View {
         HStack(spacing: 0) {
             StepIndicator(icon: "mappin.circle.fill", isActive: true)
@@ -98,13 +112,15 @@ struct CheckoutView: View {
             VStack(spacing: 16) {
                 CustomTextField(
                     title: "First name",
-                    text: $viewModel.firstName,
+                    text: .constant(viewModel.firstName),
+                    isEnabled: false,
                     isRequired: true,
                     error: viewModel.formErrors["firstName"]
                 )
                 CustomTextField(
                     title: "Last name",
-                    text: $viewModel.lastName,
+                    text: .constant(viewModel.lastName),
+                    isEnabled: false,
                     isRequired: true,
                     error: viewModel.formErrors["lastName"]
                 )
@@ -212,43 +228,8 @@ struct CheckoutView: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
     }
-    
-    private var continueButton: some View {
-        Button(action: viewModel.proceedToPayment) {
-            Text("Continue to payment")
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(Color.black)
-                .cornerRadius(25)
-        }
-        .padding(.top, 8)
-    }
 }
 
-struct StepIndicator: View {
-    let icon: String
-    let isActive: Bool
-    
-    var body: some View {
-        Image(systemName: icon)
-            .imageScale(.large)
-            .foregroundColor(isActive ? .blue : .gray)
-            .frame(width: 44, height: 44)
-            .background(
-                Circle()
-                    .fill(isActive ? .blue.opacity(0.1) : .gray.opacity(0.1))
-            )
-    }
-}
-
-struct Line: View {
-    var body: some View {
-        Rectangle()
-            .frame(height: 1)
-    }
-}
 
 struct ShippingMethodRow: View {
     let method: ShippingMethod

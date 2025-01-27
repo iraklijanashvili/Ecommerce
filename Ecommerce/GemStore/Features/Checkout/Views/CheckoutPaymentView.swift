@@ -1,242 +1,258 @@
+//
+//  CheckoutPaymentView.swift
+//  Ecommerce
+//
+//  Created by Imac on 24.01.25.
+//
+
 import SwiftUI
+import FirebaseFirestore
 
 struct CheckoutPaymentView: View {
     @StateObject private var viewModel: CheckoutPaymentViewModel
+    @StateObject private var paymentViewModel = PaymentViewModel()
     @Environment(\.dismiss) private var dismiss
-    let onPlaceOrder: () -> Void
+    @State private var cardLogos: [String: String] = [:]
+    @State private var showAddCard = false
+    @State private var showOrderCompleted = false
     
-    init(subtotal: Double, shipping: String, onPlaceOrder: @escaping () -> Void) {
-        let vm = CheckoutPaymentViewModel()
-        vm.subtotal = subtotal
-        vm.shipping = shipping
-        _viewModel = StateObject(wrappedValue: vm)
-        self.onPlaceOrder = onPlaceOrder
+    init(productPrice: Double, shippingPrice: Double = 0) {
+        _viewModel = StateObject(wrappedValue: CheckoutPaymentViewModel(
+            productPrice: productPrice,
+            shippingPrice: shippingPrice
+        ))
     }
     
     var body: some View {
         VStack(spacing: 0) {
-            // Progress indicator
-            HStack(spacing: 20) {
-                Image(systemName: "mappin.circle.fill")
-                Rectangle()
-                    .frame(height: 1)
-                Image(systemName: "creditcard.fill")
-                    .foregroundColor(.black)
-                Rectangle()
-                    .frame(height: 1)
-                Image(systemName: "checkmark.circle")
-            }
-            .padding()
-            
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Step indicator
-                    Text("STEP 2")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                VStack(spacing: 24) {
+                    progressIndicator
+                        .padding(.horizontal)
                     
-                    // Payment title
-                    Text("Payment")
-                        .font(.title)
-                        .bold()
+                    paymentMethodsSection
+                        .padding(.horizontal)
                     
-                    // Payment methods
-                    HStack(spacing: 16) {
-                        PaymentMethodButton(
-                            isSelected: viewModel.selectedPaymentMethod == .cash,
-                            icon: "dollarsign.circle",
-                            title: "Cash",
-                            action: { viewModel.selectedPaymentMethod = .cash }
-                        )
-                        
-                        PaymentMethodButton(
-                            isSelected: viewModel.selectedPaymentMethod == .creditCard,
-                            icon: "creditcard",
-                            title: "Credit Card",
-                            action: { viewModel.selectedPaymentMethod = .creditCard }
-                        )
-                    }
+                    priceBreakdownSection
+                        .padding(.horizontal)
                     
-                    if viewModel.selectedPaymentMethod == .creditCard {
-                        // Cards section
-                        VStack(alignment: .leading, spacing: 16) {
-                            HStack {
-                                Text("Choose your card")
-                                    .font(.headline)
-                                
-                                Spacer()
-                                
-                                Button(action: { viewModel.showAddCard = true }) {
-                                    Text("Add new+")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                            
-                            if viewModel.isLoading {
-                                ProgressView()
-                                    .frame(maxWidth: .infinity)
-                            } else {
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 16) {
-                                        ForEach(viewModel.cards) { card in
-                                            PaymentCardView(
-                                                card: card,
-                                                logoUrl: nil,
-                                                isSelected: viewModel.selectedCard?.id == card.id,
-                                                onSelect: { viewModel.selectedCard = card }
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // Order summary
-                    VStack(spacing: 16) {
-                        HStack {
-                            Text("Product price")
-                                .foregroundColor(.gray)
-                            Spacer()
-                            Text("$\(String(format: "%.2f", viewModel.subtotal))")
-                        }
-                        
-                        HStack {
-                            Text("Shipping")
-                                .foregroundColor(.gray)
-                            Spacer()
-                            Text(viewModel.shipping)
-                        }
-                        
-                        Divider()
-                        
-                        HStack {
-                            Text("Subtotal")
-                                .bold()
-                            Spacer()
-                            Text("$\(String(format: "%.2f", viewModel.total))")
-                                .bold()
-                        }
-                    }
-                    .padding(.top)
-                    
-                    // Place order button
-                    Button(action: {
-                        Task {
-                            if await viewModel.placeOrder() {
-                                onPlaceOrder()
-                            }
-                        }
-                    }) {
-                        Text("Place my order")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.black)
-                            .cornerRadius(30)
-                    }
-                    .padding(.top, 32)
+                    placeOrderButton
+                        .padding(.horizontal)
+                        .padding(.bottom)
                 }
-                .padding()
+                .padding(.vertical)
             }
         }
-        .sheet(isPresented: $viewModel.showAddCard) {
-            AddCardView(parentViewModel: viewModel)
+        .background(Color(.systemGroupedBackground))
+        .safeAreaInset(edge: .top) {
+            navigationBar
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("OK") { viewModel.errorMessage = nil }
-        } message: {
-            if let error = viewModel.errorMessage {
-                Text(error)
+        .navigationBarHidden(true)
+        .onAppear {
+            fetchCardLogos()
+            Task {
+                await viewModel.loadCards()
+            }
+        }
+        .sheet(isPresented: $showAddCard) {
+            AddCardView(parentViewModel: paymentViewModel)
+        }
+        .onChange(of: paymentViewModel.cards) { newCards in
+            Task {
+                await viewModel.loadCards()
+            }
+        }
+        .fullScreenCover(isPresented: $showOrderCompleted) {
+            OrderCompletedView(navigationDelegate: self)
+        }
+    }
+    
+    private func fetchCardLogos() {
+        let db = Firestore.firestore()
+        let cardTypes = ["visa", "mastercard", "amex"]
+        
+        for cardType in cardTypes {
+            let docRef = db.collection("cardLogos").document(cardType)
+            docRef.getDocument { document, error in
+                if let document = document, document.exists {
+                    if let logoUrl = document.data()?["logoUrl"] as? String {
+                        cardLogos[cardType] = logoUrl
+                    }
+                }
             }
         }
     }
-}
-
-struct PaymentMethodButton: View {
-    let isSelected: Bool
-    let icon: String
-    let title: String
-    let action: () -> Void
     
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                Text(title)
-                    .font(.subheadline)
+    private var navigationBar: some View {
+        HStack {
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.left")
+                    .foregroundColor(.primary)
+                    .imageScale(.large)
             }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(isSelected ? Color.black : Color.white)
-            .foregroundColor(isSelected ? .white : .black)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
+            
+            Spacer()
+            
+            Text("Check out")
+                .font(.headline)
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(.systemBackground))
+    }
+    
+    private var progressIndicator: some View {
+        HStack(spacing: 0) {
+            StepIndicator(icon: "mappin.circle.fill", isActive: false)
+            Line()
+                .foregroundColor(.gray.opacity(0.3))
+            StepIndicator(icon: "creditcard", isActive: true)
+            Line()
+                .foregroundColor(.gray.opacity(0.3))
+            StepIndicator(icon: "checkmark.circle", isActive: false)
         }
     }
-}
-
-struct PaymentCardView: View {
-    let card: PaymentCard
-    let logoUrl: String?
-    let isSelected: Bool
-    let onSelect: () -> Void
     
-    var body: some View {
-        Button(action: onSelect) {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack {
-                    if let logoUrl = logoUrl {
-                        CachedAsyncImage(url: logoUrl, width: 60)
-                    }
-                    Spacer()
-                }
-                
-                Text(card.cardNumber)
-                    .font(.system(.title3, design: .monospaced))
-                    .foregroundColor(.white)
-                
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("CARDHOLDER NAME")
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
-                        Text(card.cardholderName)
-                            .font(.caption)
-                            .foregroundColor(.white)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .leading) {
-                        Text("VALID THRU")
-                            .font(.caption2)
-                            .foregroundColor(.white.opacity(0.7))
-                        Text(card.expiryDate)
-                            .font(.caption)
-                            .foregroundColor(.white)
-                    }
-                }
-            }
-            .padding()
-            .frame(width: 300, height: 180)
-            .background(
-                LinearGradient(
-                    colors: [.blue, .blue.opacity(0.8)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
+    private var paymentMethodsSection: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            Text("STEP 2")
+                .font(.caption)
+                .foregroundColor(.gray)
+            
+            Text("Payment")
+                .font(.title2)
+                .bold()
+            
+            HStack(spacing: 12) {
+                PaymentMethodButton(
+                    isSelected: viewModel.selectedPaymentMethod == .cash,
+                    icon: "dollarsign.circle.fill",
+                    title: "Cash",
+                    action: { viewModel.selectedPaymentMethod = .cash }
                 )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white, lineWidth: isSelected ? 2 : 0)
-            )
-            .cornerRadius(16)
+                
+                PaymentMethodButton(
+                    isSelected: viewModel.selectedPaymentMethod == .creditCard,
+                    icon: "creditcard.fill",
+                    title: "Credit Card",
+                    action: { viewModel.selectedPaymentMethod = .creditCard }
+                )
+            }
+            
+            if viewModel.selectedPaymentMethod == .creditCard {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                } else if viewModel.cards.isEmpty {
+                    VStack(spacing: 16) {
+                        Text("No cards added yet")
+                            .foregroundColor(.gray)
+                        
+                        Button(action: { showAddCard = true }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add new card")
+                            }
+                            .foregroundColor(.blue)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                } else {
+                    VStack(spacing: 16) {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 16) {
+                                ForEach(viewModel.cards) { card in
+                                    PaymentCardView(
+                                        card: card,
+                                        logoUrl: cardLogos[card.cardType.rawValue],
+                                        isSelected: viewModel.selectedCard?.id == card.id,
+                                        onSelect: { viewModel.selectedCard = card }
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Button(action: { showAddCard = true }) {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Add another card")
+                            }
+                            .foregroundColor(.blue)
+                        }
+                    }
+                }
+            }
         }
     }
-} 
+    
+    private var priceBreakdownSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Product price")
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("$\(Int(viewModel.productPrice))")
+                    .bold()
+            }
+            
+            HStack {
+                Text("Shipping")
+                    .foregroundColor(.gray)
+                Spacer()
+                if viewModel.shippingPrice == 0 {
+                    Text("Freeship")
+                        .bold()
+                } else {
+                    Text("$\(Int(viewModel.shippingPrice))")
+                        .bold()
+                }
+            }
+            
+            Divider()
+            
+            HStack {
+                Text("Subtotal")
+                    .font(.headline)
+                Spacer()
+                Text("$\(Int(viewModel.totalAmount))")
+                    .font(.headline)
+            }
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+    }
+    
+    private var placeOrderButton: some View {
+        Button(action: {
+            Task {
+                if await viewModel.placeOrder() {
+                    showOrderCompleted = true
+                }
+            }
+        }) {
+            Text("Place my order")
+                .font(.headline)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+                .background(viewModel.canPlaceOrder ? Color.black : Color.gray)
+                .cornerRadius(25)
+        }
+        .disabled(!viewModel.canPlaceOrder)
+        .padding(.top, 8)
+    }
+}
+
+extension CheckoutPaymentView: OrderCompletionNavigationDelegate {
+    func navigateToMyOrders() {
+    }
+    
+    func navigateToHome() {
+        dismiss()
+    }
+}

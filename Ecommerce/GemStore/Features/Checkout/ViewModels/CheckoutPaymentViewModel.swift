@@ -1,59 +1,86 @@
+//
+//  CheckoutPaymentViewModel.swift
+//  Ecommerce
+//
+//  Created by Imac on 27.01.25.
+//
+
 import Foundation
 import Combine
+import SwiftUI
 
 @MainActor
-class CheckoutPaymentViewModel: PaymentViewModel {
-    @Published var selectedPaymentMethod: PaymentMethod = .creditCard
+class CheckoutPaymentViewModel: ObservableObject {
+    @Published var selectedPaymentMethod: PaymentMethod?
     @Published var selectedCard: PaymentCard?
     @Published var cards: [PaymentCard] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
-    @Published var showAddCard = false
     
-    var subtotal: Double = 0
-    var shipping: String = ""
+    let productPrice: Double
+    let shippingPrice: Double
     
-    var total: Double {
-        subtotal
-    }
+    private let paymentService: PaymentServiceProtocol
     
-    enum PaymentMethod {
-        case cash
-        case creditCard
-    }
-    
-    override init(paymentService: PaymentServiceProtocol = PaymentServiceImpl.shared) {
-        super.init(paymentService: paymentService)
+    init(
+        productPrice: Double,
+        shippingPrice: Double = 0,
+        paymentService: PaymentServiceProtocol = PaymentServiceImpl.shared
+    ) {
+        self.productPrice = productPrice
+        self.shippingPrice = shippingPrice
+        self.paymentService = paymentService
+        
         Task {
             await loadCards()
         }
     }
     
+    var totalAmount: Double {
+        productPrice + shippingPrice
+    }
+    
     func loadCards() async {
         isLoading = true
+        defer { isLoading = false }
+        
         do {
             cards = try await paymentService.fetchCards()
-            if let firstCard = cards.first {
-                selectedCard = firstCard
-            }
-            isLoading = false
         } catch {
             errorMessage = error.localizedDescription
-            isLoading = false
+        }
+    }
+    
+    var canPlaceOrder: Bool {
+        switch selectedPaymentMethod {
+        case .cash:
+            return true
+        case .creditCard:
+            return selectedCard != nil
+        case .none:
+            return false
         }
     }
     
     func placeOrder() async -> Bool {
-        guard selectedPaymentMethod == .creditCard else {
-            return true // Cash payment is always valid
-        }
-        
-        guard let selectedCard = selectedCard else {
+        guard canPlaceOrder else {
             errorMessage = "Please select a payment method"
             return false
         }
         
-        // Here you would implement the actual order placement logic
-        return true
+        isLoading = true
+        defer { isLoading = false }
+        
+        do {
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
     }
+}
+
+enum PaymentMethod {
+    case cash
+    case creditCard
 } 

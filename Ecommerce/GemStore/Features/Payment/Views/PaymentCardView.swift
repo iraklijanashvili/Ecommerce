@@ -1,37 +1,19 @@
-import SwiftUI
+//
+//  PaymentCardView.swift
+//  Ecommerce
+//
+//  Created by Imac on 27.01.25.
+//
 
-struct PaymentMethodButton: View {
-    let isSelected: Bool
-    let icon: String
-    let title: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                Text(title)
-                    .font(.subheadline)
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(isSelected ? Color.black : Color.white)
-            .foregroundColor(isSelected ? .white : .black)
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
-        }
-    }
-}
+
+import SwiftUI
 
 struct PaymentCardView: View {
     let card: PaymentCard
     let logoUrl: String?
     let isSelected: Bool
     let onSelect: () -> Void
+    var onDelete: (() -> Void)?
     
     var body: some View {
         Button(action: onSelect) {
@@ -40,10 +22,34 @@ struct PaymentCardView: View {
                     if let logoUrl = logoUrl {
                         CachedAsyncImage(url: logoUrl, width: 60)
                     }
+                    
+                    if isSelected {
+                        Spacer()
+                        HStack(spacing: 4) {
+                            Text("Selected")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.green.opacity(0.8))
+                        .cornerRadius(12)
+                    }
+                    
                     Spacer()
+                    
+                    if let onDelete = onDelete {
+                        Button(action: onDelete) {
+                            Image(systemName: "trash.circle.fill")
+                                .foregroundColor(.white)
+                                .font(.title2)
+                        }
+                    }
                 }
                 
-                Text(card.cardNumber)
+                Text(card.maskedNumber)
                     .font(.system(.title3, design: .monospaced))
                     .foregroundColor(.white)
                 
@@ -73,7 +79,7 @@ struct PaymentCardView: View {
             .frame(width: 300, height: 180)
             .background(
                 LinearGradient(
-                    colors: [.blue, .blue.opacity(0.8)],
+                    colors: isSelected ? [.blue, .blue.opacity(0.6)] : [.blue.opacity(0.8), .blue.opacity(0.6)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )

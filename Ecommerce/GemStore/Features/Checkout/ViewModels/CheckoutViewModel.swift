@@ -10,8 +10,8 @@ import Combine
 import SwiftUI
 
 class CheckoutViewModel: ObservableObject {
-    @Published var firstName: String = ""
-    @Published var lastName: String = ""
+    @Published private(set) var firstName: String = ""
+    @Published private(set) var lastName: String = ""
     @Published var streetName: String = ""
     @Published var city: String = ""
     @Published var zipCode: String = ""
@@ -27,6 +27,8 @@ class CheckoutViewModel: ObservableObject {
     @Published var shippingMethods: [ShippingMethod] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
+    
+    @Published var navigateToPayment = false
     
     private var cancellables = Set<AnyCancellable>()
     private let userService: UserServiceProtocol
@@ -72,8 +74,10 @@ class CheckoutViewModel: ObservableObject {
     }
     
     private func loadUserData() {
-        firstName = userService.currentUser?.firstName ?? ""
-        lastName = userService.currentUser?.lastName ?? ""
+        Task { @MainActor in
+            firstName = userService.currentUser?.firstName ?? ""
+            lastName = userService.currentUser?.lastName ?? ""
+        }
     }
     
     private func setupTotalAmountCalculation() {
@@ -117,6 +121,7 @@ class CheckoutViewModel: ObservableObject {
     
     func proceedToPayment() {
         if isFormValid {
+            navigateToPayment = true
         } else {
             showValidationAlert = true
         }

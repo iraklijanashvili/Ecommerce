@@ -145,4 +145,5 @@ struct CachedAsyncImage: View {
             image = await ImageCacheService.shared.loadImage(from: url)
         }
     }
-} 
+}
+

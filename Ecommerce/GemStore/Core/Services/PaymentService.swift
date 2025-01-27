@@ -41,9 +41,13 @@ class PaymentServiceImpl: PaymentServiceProtocol {
         }
         
         let docRef = userCardsRef.document()
-        var updatedCard = card
-        updatedCard.id = docRef.documentID
-        try docRef.setData(from: updatedCard)
+        let newCard = PaymentCard(
+            cardNumber: card.cardNumber,
+            cardholderName: card.cardholderName,
+            expiryDate: card.expiryDate,
+            cardType: card.cardType
+        )
+        try docRef.setData(from: newCard)
     }
     
     func deleteCard(id: String) async throws {

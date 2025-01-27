@@ -13,83 +13,102 @@ struct CartView: View {
     @State private var showingCheckout = false
     
     var body: some View {
-        NavigationView {
-            Group {
-                if viewModel.items.isEmpty {
-                    VStack(spacing: 20) {
-                        Image(systemName: "cart.badge.minus")
-                            .font(.system(size: 70))
-                            .foregroundColor(.gray)
-                        
-                        Text("Your cart is empty")
-                            .font(.title2)
-                            .foregroundColor(.gray)
-                        
-                        Text("Items you add to your cart will appear here")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                            .multilineTextAlignment(.center)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    cartItemsSection
+                    
+                    priceBreakdownSection
+                        .padding(.horizontal)
+                    
+                    NavigationLink(destination: CheckoutView()) {
+                        Text("Continue to payment")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .background(Color.black)
+                            .cornerRadius(25)
                     }
-                    .padding()
-                } else {
-                    ScrollView {
-                        VStack(spacing: 20) {
-                            ForEach(viewModel.items) { item in
-                                CartItemView(item: item) { quantity in
-                                    viewModel.updateQuantity(itemId: item.id, quantity: quantity)
-                                }
-                            }
-                            
-                            VStack(spacing: 16) {
-                                HStack {
-                                    Text("Product price")
-                                        .foregroundColor(.gray)
-                                    Spacer()
-                                    Text("$\(Int(viewModel.totalPrice))")
-                                        .bold()
-                                }
-                                
-                                HStack {
-                                    Text("Shipping")
-                                        .foregroundColor(.gray)
-                                    Spacer()
-                                    Text(viewModel.shipping)
-                                        .bold()
-                                }
-                                
-                                HStack {
-                                    Text("Subtotal")
-                                        .foregroundColor(.gray)
-                                    Spacer()
-                                    Text("$\(Int(viewModel.totalPrice))")
-                                        .bold()
-                                }
-                                
-                                Button(action: { showingCheckout = true }) {
-                                    Text("Proceed to checkout")
-                                        .font(.headline)
-                                        .foregroundColor(.white)
-                                        .frame(maxWidth: .infinity)
-                                        .frame(height: 50)
-                                        .background(Color.black)
-                                        .cornerRadius(25)
-                                }
-                            }
-                            .padding()
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+                    .padding(.horizontal)
+                    .padding(.bottom)
+                }
+                .padding(.vertical)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .safeAreaInset(edge: .top) {
+            navigationBar
+        }
+        .navigationBarBackButtonHidden(true)
+        .navigationBarHidden(true)
+    }
+    
+    private var cartItemsSection: some View {
+        VStack {
+            if viewModel.items.isEmpty {
+                VStack(spacing: 20) {
+                    Image(systemName: "cart.badge.minus")
+                        .font(.system(size: 70))
+                        .foregroundColor(.gray)
+                    
+                    Text("Your cart is empty")
+                        .font(.title2)
+                        .foregroundColor(.gray)
+                    
+                    Text("Items you add to your cart will appear here")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+            } else {
+                VStack(spacing: 20) {
+                    ForEach(viewModel.items) { item in
+                        CartItemView(item: item) { quantity in
+                            viewModel.updateQuantity(itemId: item.id, quantity: quantity)
                         }
-                        .padding()
                     }
                 }
+                .padding(.horizontal)
             }
-            .navigationTitle("Your Cart")
-            .background(Color(.systemGray6))
         }
-        .sheet(isPresented: $showingCheckout) {
-            CheckoutView()
+    }
+    
+    private var priceBreakdownSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Text("Product price")
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("$\(Int(viewModel.totalPrice))")
+                    .bold()
+            }
+            
+            HStack {
+                Text("Shipping")
+                    .foregroundColor(.gray)
+                Spacer()
+                Text(viewModel.shipping)
+                    .bold()
+            }
+            
+            HStack {
+                Text("Subtotal")
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("$\(Int(viewModel.totalPrice))")
+                    .bold()
+            }
         }
+        .padding()
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+    
+    private var navigationBar: some View {
+        Text("Cart")
     }
 }
 

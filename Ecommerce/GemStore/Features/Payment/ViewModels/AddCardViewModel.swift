@@ -1,4 +1,3 @@
-
 //
 //  AddCardViewModel.swift
 //  Ecommerce
@@ -79,7 +78,23 @@ class AddCardViewModel: ObservableObject {
         cvv = String(filtered.prefix(isAmex ? 4 : 3))
     }
     
+    func validateCardholderName(_ input: String) -> Bool {
+        let containsOnlyLettersAndSpaces = input.range(of: "[^a-zA-Z\\s]", options: .regularExpression) == nil
+        return containsOnlyLettersAndSpaces && input.count >= 2
+    }
+    
+    func formatCardholderName(_ input: String) {
+        if validateCardholderName(input) {
+            cardholderName = input
+        }
+    }
+    
     func validateCard() -> Bool {
+        guard validateCardholderName(cardholderName) else {
+            showError("Cardholder name should only contain letters")
+            return false
+        }
+        
         let numbers = cardNumber.compactMap { Int(String($0)) }
         guard numbers.count == (isAmex ? 15 : 16) else {
             showError("Invalid card number length")
@@ -112,13 +127,10 @@ class AddCardViewModel: ObservableObject {
     }
     
     func addCard() async {
-        let maskedNumber = cardNumber.filter { $0.isNumber }
-        let masked = String(maskedNumber.suffix(4))
-        let maskedCardNumber = "•••• •••• •••• " + masked
+        guard validateCard() else { return }
         
         let card = PaymentCard(
-            id: UUID().uuidString,
-            cardNumber: maskedCardNumber,
+            cardNumber: cardNumber.filter { $0.isNumber },
             cardholderName: cardholderName,
             expiryDate: expiryDate,
             cardType: PaymentCard.detectCardType(from: cardNumber)
