@@ -12,9 +12,11 @@ import SwiftUI
 actor ImageCache {
     static let shared = ImageCache()
     private var cache = NSCache<NSString, UIImage>()
+    private var loadingTasks: [String: Task<UIImage?, Error>] = [:]
     
     private init() {
         cache.countLimit = 100
+        cache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
     }
     
     func object(forKey key: String) -> UIImage? {
@@ -22,7 +24,8 @@ actor ImageCache {
     }
     
     func setObject(_ image: UIImage, forKey key: String) {
-        cache.setObject(image, forKey: key as NSString)
+        let cost = Int(image.size.width * image.size.height * 4)
+        cache.setObject(image, forKey: key as NSString, cost: cost)
     }
     
     func removeObject(forKey key: String) {
@@ -32,12 +35,48 @@ actor ImageCache {
     func clearCache() {
         cache.removeAllObjects()
     }
+    
+    func loadImage(from urlString: String) async throws -> UIImage? {
+        if let cachedImage = object(forKey: urlString) {
+            return cachedImage
+        }
+        
+        if let existingTask = loadingTasks[urlString] {
+            let image = try await existingTask.value
+            return image
+        }
+        
+        let task = Task<UIImage?, Error> {
+            guard let url = URL(string: urlString) else { return nil }
+            
+            do {
+                let (data, _) = try await URLSession.shared.data(from: url)
+                if let image = UIImage(data: data) {
+                    setObject(image, forKey: urlString)
+                    return image
+                }
+                return nil
+            } catch {
+                throw error
+            }
+        }
+        
+        loadingTasks[urlString] = task
+        
+        do {
+            let image = try await task.value
+            loadingTasks[urlString] = nil
+            return image
+        } catch {
+            loadingTasks[urlString] = nil
+            throw error
+        }
+    }
 }
 
 class ImageCacheService {
     static let shared = ImageCacheService()
     private let cache: ImageCache
-    private let queue = DispatchQueue(label: "com.gemstore.imagecache")
     
     private init() {
         self.cache = .shared
@@ -45,54 +84,11 @@ class ImageCacheService {
     
     @MainActor
     func loadImage(from urlString: String) async -> UIImage? {
-        if let cachedImage = await cache.object(forKey: urlString) {
-            return cachedImage
-        }
-        
-        guard let url = URL(string: urlString) else { return nil }
-        
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
-            if let image = UIImage(data: data) {
-                await cache.setObject(image, forKey: urlString)
-                return image
-            }
+            return try await cache.loadImage(from: urlString)
         } catch {
-            print("Error loading image with URLSession: \(error)")
-        }
-        
-        return await withCheckedContinuation { continuation in
-            let imageView = AsyncImage(url: url) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    Image(systemName: "photo")
-                        .foregroundColor(.gray)
-                case .empty:
-                    ProgressView()
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            
-            let hostingController = UIHostingController(rootView: imageView)
-            hostingController.view.frame = CGRect(x: 0, y: 0, width: 100, height: 100)
-            
-            if let snapshot = hostingController.view.snapshotImage() {
-                Task {
-                    await self.cache.setObject(snapshot, forKey: urlString)
-                }
-                continuation.resume(returning: snapshot)
-            } else {
-                continuation.resume(returning: nil)
-            }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                continuation.resume(returning: nil)
-            }
+            print("Error loading image: \(error)")
+            return nil
         }
     }
     
@@ -114,30 +110,60 @@ class ImageCacheService {
 
 extension Image {
     static func cached(_ urlString: String) -> some View {
-        AsyncImage(url: URL(string: urlString)) { phase in
-            switch phase {
-            case .empty:
-                ProgressView()
-            case .success(let image):
-                image
+        CachedImageView(urlString: urlString)
+    }
+}
+
+struct CachedImageView: View {
+    let urlString: String
+    @State private var image: UIImage?
+    @State private var isLoading = true
+    
+    var body: some View {
+        Group {
+            if let image = image {
+                Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-            case .failure:
-                Image(systemName: "photo")
-                    .foregroundColor(.gray)
-            @unknown default:
-                EmptyView()
+            } else {
+                if isLoading {
+                    ProgressView()
+                } else {
+                    Image(systemName: "photo")
+                        .foregroundColor(.gray)
+                }
+            }
+        }
+        .onAppear {
+            loadImageIfNeeded()
+        }
+    }
+    
+    private func loadImageIfNeeded() {
+        guard image == nil else { return }
+        
+        Task {
+            if let cachedImage = await ImageCache.shared.object(forKey: urlString) {
+                await MainActor.run {
+                    self.image = cachedImage
+                    self.isLoading = false
+                }
+                return
+            }
+            
+            do {
+                if let loadedImage = try await ImageCache.shared.loadImage(from: urlString) {
+                    await MainActor.run {
+                        self.image = loadedImage
+                    }
+                }
+            } catch {
+                print("Error loading image: \(error)")
+            }
+            
+            await MainActor.run {
+                self.isLoading = false
             }
         }
     }
 }
-
-extension UIView {
-    func snapshotImage() -> UIImage? {
-        UIGraphicsBeginImageContextWithOptions(bounds.size, false, UIScreen.main.scale)
-        drawHierarchy(in: bounds, afterScreenUpdates: true)
-        let image = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return image
-    }
-} 

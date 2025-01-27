@@ -118,46 +118,33 @@ class WishlistViewController: UIViewController {
     
     private func setupNavigationBar() {
         navigationController?.setNavigationBarHidden(false, animated: false)
-        navigationItem.hidesBackButton = true
-        navigationItem.leftBarButtonItem = nil
-        navigationItem.backButtonTitle = ""
-        navigationItem.backBarButtonItem = nil
+        navigationController?.navigationBar.tintColor = .black
+        
+        let backButton = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: self,
+            action: #selector(backButtonTapped)
+        )
+        backButton.tintColor = .black
+        navigationItem.leftBarButtonItem = backButton
         
         title = "My Wishlist"
         navigationController?.navigationBar.titleTextAttributes = [.foregroundColor: UIColor.black]
-        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
-        
-        navigationItem.rightBarButtonItems = nil
-        navigationItem.leftBarButtonItems = nil
-        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
+    }
+    
+    @objc private func backButtonTapped() {
+        navigationController?.popViewController(animated: true)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.setNavigationBarHidden(false, animated: false)
         navigationController?.navigationBar.tintColor = .black
-        navigationItem.hidesBackButton = true
-        navigationItem.leftBarButtonItem = nil
-        navigationItem.backButtonTitle = ""
-        navigationItem.backBarButtonItem = nil
-        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
-        
-        navigationItem.rightBarButtonItems = nil
-        navigationItem.leftBarButtonItems = nil
-        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        navigationItem.hidesBackButton = true
-        navigationItem.leftBarButtonItem = nil
-        navigationItem.backButtonTitle = ""
-        navigationItem.backBarButtonItem = nil
-        navigationController?.interactivePopGestureRecognizer?.isEnabled = false
-        
-        navigationItem.rightBarButtonItems = nil
-        navigationItem.leftBarButtonItems = nil
-        navigationItem.backBarButtonItem = UIBarButtonItem(title: "", style: .plain, target: nil, action: nil)
     }
     
     private func setupBindings() {

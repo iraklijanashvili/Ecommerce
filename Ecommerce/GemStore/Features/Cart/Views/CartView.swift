@@ -21,17 +21,33 @@ struct CartView: View {
                     priceBreakdownSection
                         .padding(.horizontal)
                     
-                    NavigationLink(destination: CheckoutView()) {
-                        Text("Continue to payment")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .background(Color.black)
-                            .cornerRadius(25)
+                    Spacer()
+                    
+                    VStack(spacing: 16) {
+                        HStack {
+                            Text("Total")
+                                .font(.headline)
+                            
+                            Spacer()
+                            
+                            Text(viewModel.totalPrice, format: .currency(code: "USD"))
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                        }
+                        
+                        NavigationLink(destination: CheckoutView()) {
+                            Text("Continue to payment")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 50)
+                                .background(viewModel.items.isEmpty ? Color.gray : Color.black)
+                                .cornerRadius(25)
+                        }
+                        .disabled(viewModel.items.isEmpty)
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom)
+                    .padding()
+                    .background(Color.white)
                 }
                 .padding(.vertical)
             }

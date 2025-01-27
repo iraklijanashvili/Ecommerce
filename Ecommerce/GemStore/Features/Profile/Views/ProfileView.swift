@@ -13,7 +13,7 @@ struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     HStack(spacing: 16) {
@@ -49,7 +49,9 @@ struct ProfileView: View {
                             
                             Spacer()
                             
-                            NavigationLink(destination: Text("Settings")) {
+                            NavigationLink {
+                                Text("Settings")
+                            } label: {
                                 Image(systemName: "gearshape.fill")
                                     .font(.title2)
                                     .foregroundColor(.gray)
@@ -62,52 +64,34 @@ struct ProfileView: View {
                         .padding(.horizontal)
                     
                     VStack(spacing: 0) {
-                        ProfileMenuItem(icon: "mappin.and.ellipse", title: "Address", destination: Text("Address"))
+                        NavigationLink {
+                            OrdersViewControllerWrapper()
+                                .navigationBarBackButtonHidden()
+                                .toolbarBackground(.visible, for: .navigationBar)
+                        } label: {
+                            ProfileMenuItem(icon: "list.bullet.rectangle.portrait", title: "My Orders")
+                        }
                         
-                        ProfileMenuItem(icon: "creditcard", title: "Payment Method", destination: PaymentView())
+                        NavigationLink {
+                            PaymentView()
+                                .navigationBarBackButtonHidden()
+                                .toolbarBackground(.visible, for: .navigationBar)
+                        } label: {
+                            ProfileMenuItem(icon: "creditcard", title: "Payment Method")
+                        }
                         
                         NavigationLink {
                             WishlistViewControllerWrapper()
-                                .navigationBarBackButtonHidden(true)
-                                .navigationBarHidden(false)
-                                .navigationBarTitleDisplayMode(.inline)
-                                .toolbar(.hidden, for: .navigationBar)
+                                .navigationBarBackButtonHidden()
+                                .toolbarBackground(.visible, for: .navigationBar)
                         } label: {
-                            HStack {
-                                Image(systemName: "heart")
-                                    .font(.title3)
-                                    .foregroundColor(.black)
-                                
-                                Text("My Wishlist")
-                                    .foregroundColor(.black)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
-                            }
-                            .padding()
+                            ProfileMenuItem(icon: "heart", title: "My Wishlist")
                         }
-                        Divider()
-                            .padding(.horizontal)
                         
                         Button(action: {
                             viewModel.signOut()
                         }) {
-                            HStack {
-                                Image(systemName: "rectangle.portrait.and.arrow.right")
-                                    .font(.title3)
-                                    .foregroundColor(.red)
-                                
-                                Text("Log Out")
-                                    .foregroundColor(.red)
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.gray)
-                            }
-                            .padding()
+                            ProfileMenuItem(icon: "rectangle.portrait.and.arrow.right", title: "Log Out", isDestructive: true)
                         }
                     }
                     .background(Color.white)
@@ -118,6 +102,7 @@ struct ProfileView: View {
                 .padding(.top, 20)
             }
             .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.large)
             .alert("Error", isPresented: Binding(
                 get: { viewModel.error != nil },
                 set: { if !$0 { viewModel.error = nil } }
@@ -132,28 +117,27 @@ struct ProfileView: View {
     }
 }
 
-struct ProfileMenuItem<Destination: View>: View {
+struct ProfileMenuItem: View {
     let icon: String
     let title: String
-    let destination: Destination
+    var isDestructive: Bool = false
     
     var body: some View {
-        NavigationLink(destination: destination) {
-            HStack {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundColor(.black)
-                
-                Text(title)
-                    .foregroundColor(.black)
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.gray)
-            }
-            .padding()
+        HStack {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(isDestructive ? .red : .black)
+            
+            Text(title)
+                .foregroundColor(isDestructive ? .red : .black)
+            
+            Spacer()
+            
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
         }
+        .padding()
+        
         Divider()
             .padding(.horizontal)
     }

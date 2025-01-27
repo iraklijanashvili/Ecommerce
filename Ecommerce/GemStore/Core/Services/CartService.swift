@@ -17,6 +17,8 @@ protocol CartServiceProtocol {
     var itemsPublisher: AnyPublisher<[CartItem], Never> { get }
     var totalPrice: Double { get }
     var totalPricePublisher: AnyPublisher<Double, Never> { get }
+    var totalQuantity: Int { get }
+    var totalQuantityPublisher: AnyPublisher<Int, Never> { get }
     
     func addToCart(product: Product, quantity: Int, size: String, color: ProductColor)
     func removeFromCart(itemId: String)
@@ -30,6 +32,7 @@ class CartServiceImpl: CartServiceProtocol {
     private let db = Firestore.firestore()
     @Published private(set) var items: [CartItem] = []
     @Published private(set) var totalPrice: Double = 0
+    @Published private(set) var totalQuantity: Int = 0
     
     var itemsPublisher: AnyPublisher<[CartItem], Never> {
         $items.eraseToAnyPublisher()
@@ -37,6 +40,10 @@ class CartServiceImpl: CartServiceProtocol {
     
     var totalPricePublisher: AnyPublisher<Double, Never> {
         $totalPrice.eraseToAnyPublisher()
+    }
+    
+    var totalQuantityPublisher: AnyPublisher<Int, Never> {
+        $totalQuantity.eraseToAnyPublisher()
     }
     
     private init() {
@@ -47,6 +54,12 @@ class CartServiceImpl: CartServiceProtocol {
                 items.reduce(0) { $0 + $1.totalPrice }
             }
             .assign(to: &$totalPrice)
+            
+        $items
+            .map { items in
+                items.reduce(0) { $0 + $1.quantity }
+            }
+            .assign(to: &$totalQuantity)
     }
     
     private func startObservingCart() {

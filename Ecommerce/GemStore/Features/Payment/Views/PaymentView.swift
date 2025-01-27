@@ -23,14 +23,29 @@ struct PaymentView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .navigationBarTitle("Payment", displayMode: .inline)
-        .navigationBarBackButtonHidden(true)
-        .navigationBarItems(leading: Button(action: {
-            dismiss()
-        }) {
-            Image(systemName: "chevron.left")
-                .foregroundColor(.black)
-        })
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Payment")
+                    .font(.headline)
+                    .foregroundColor(.black)
+            }
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    dismiss()
+                }) {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.black)
+                        .imageScale(.large)
+                        .padding(.leading, -8)
+                }
+            }
+        }
+        .onAppear {
+            fetchCardLogos()
+        }
         .sheet(isPresented: $viewModel.showAddCard) {
             AddCardView(parentViewModel: viewModel)
         }
@@ -40,9 +55,6 @@ struct PaymentView: View {
             if let error = viewModel.errorMessage {
                 Text(error)
             }
-        }
-        .onAppear {
-            fetchCardLogos()
         }
     }
     
