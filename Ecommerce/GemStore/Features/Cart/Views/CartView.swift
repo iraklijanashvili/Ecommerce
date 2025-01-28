@@ -124,7 +124,32 @@ struct CartView: View {
     }
     
     private var navigationBar: some View {
-        Text("Cart")
+        HStack {
+            Button(action: {}) {
+                Image(systemName: "chevron.left")
+                    .foregroundColor(.primary)
+                    .imageScale(.large)
+            }
+            .opacity(0)
+            
+            Spacer()
+            
+            Text("Cart")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            Spacer()
+            
+            Button(action: {}) {
+                Image(systemName: "chevron.left")
+                    .foregroundColor(.primary)
+                    .imageScale(.large)
+            }
+            .opacity(0)
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(Color(.systemBackground))
     }
 }
 

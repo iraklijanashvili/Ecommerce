@@ -21,6 +21,7 @@ class CheckoutPaymentViewModel: ObservableObject {
     
     let productPrice: Double
     let shippingPrice: Double
+    let productName: String
     
     private let paymentService: PaymentServiceProtocol
     private let ordersService: OrdersServiceProtocol
@@ -31,12 +32,14 @@ class CheckoutPaymentViewModel: ObservableObject {
     init(
         productPrice: Double,
         shippingPrice: Double = 0,
+        productName: String,
         paymentService: PaymentServiceProtocol = PaymentServiceImpl.shared,
         ordersService: OrdersServiceProtocol = OrdersService(),
         cartService: CartServiceProtocol = CartServiceImpl.shared
     ) {
         self.productPrice = productPrice
         self.shippingPrice = shippingPrice
+        self.productName = productName
         self.paymentService = paymentService
         self.ordersService = ordersService
         self.cartService = cartService
@@ -97,13 +100,16 @@ class CheckoutPaymentViewModel: ObservableObject {
                 return false
             }
             
+            let orderId = String(UUID().uuidString.prefix(6))
+            
             let order = Order(
-                id: UUID().uuidString,
+                id: orderId,
                 trackingNumber: generateTrackingNumber(),
                 quantity: cartQuantity,
                 subtotal: totalAmount,
                 status: .pending,
-                date: Date()
+                date: Date(),
+                productName: productName
             )
             
             try await createOrder(order)
@@ -135,7 +141,8 @@ class CheckoutPaymentViewModel: ObservableObject {
                 "subtotal": order.subtotal,
                 "status": order.status.rawValue,
                 "date": Timestamp(date: order.date),
-                "userId": userId
+                "userId": userId,
+                "productName": order.productName
             ]
             
             db.collection("orders").document(order.id).setData(orderData) { error in
@@ -150,7 +157,7 @@ class CheckoutPaymentViewModel: ObservableObject {
     
     private func generateTrackingNumber() -> String {
         let prefix = "IK"
-        let randomNum = Int.random(in: 10000000...99999999)
+        let randomNum = Int.random(in: 1000...9999)
         return "\(prefix)\(randomNum)"
     }
 }

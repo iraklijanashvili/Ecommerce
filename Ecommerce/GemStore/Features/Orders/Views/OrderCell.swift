@@ -7,7 +7,13 @@
 
 import UIKit
 
+protocol OrderCellDelegate: AnyObject {
+    func orderCellDidTapDetails(_ cell: OrderCell)
+}
+
 class OrderCell: UITableViewCell {
+    weak var delegate: OrderCellDelegate?
+    
     private let containerView: UIView = {
         let view = UIView()
         view.backgroundColor = .white
@@ -39,15 +45,10 @@ class OrderCell: UITableViewCell {
         return label
     }()
     
-    private let quantityLabel: UILabel = {
+    private let productNameLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 14)
-        return label
-    }()
-    
-    private let subtotalLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 16, weight: .semibold)
+        label.font = .systemFont(ofSize: 16)
+        label.textColor = .black
         return label
     }()
     
@@ -55,16 +56,6 @@ class OrderCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14, weight: .medium)
         return label
-    }()
-    
-    private let detailsButton: UIButton = {
-        let button = UIButton(type: .system)
-        button.setTitle("Details", for: .normal)
-        button.titleLabel?.font = .systemFont(ofSize: 14, weight: .medium)
-        button.layer.cornerRadius = 15
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.black.cgColor
-        return button
     }()
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -92,11 +83,11 @@ class OrderCell: UITableViewCell {
         let stackView = UIStackView(arrangedSubviews: [
             createHStack([orderNumberLabel, dateLabel]),
             createHStack([trackingLabel]),
-            createHStack([quantityLabel, subtotalLabel]),
-            createHStack([statusLabel, detailsButton])
+            createHStack([productNameLabel]),
+            createHStack([statusLabel])
         ])
         stackView.axis = .vertical
-        stackView.spacing = 12
+        stackView.spacing = 16
         
         containerView.addSubview(stackView)
         stackView.translatesAutoresizingMaskIntoConstraints = false
@@ -107,8 +98,8 @@ class OrderCell: UITableViewCell {
             stackView.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -16)
         ])
         
-        detailsButton.widthAnchor.constraint(equalToConstant: 80).isActive = true
-        detailsButton.heightAnchor.constraint(equalToConstant: 30).isActive = true
+        productNameLabel.numberOfLines = 0
+        productNameLabel.lineBreakMode = .byWordWrapping
     }
     
     private func createHStack(_ views: [UIView]) -> UIStackView {
@@ -119,11 +110,10 @@ class OrderCell: UITableViewCell {
     }
     
     func configure(with order: Order) {
-        orderNumberLabel.text = "Order #\(order.id)"
+        orderNumberLabel.text = "Order #\(String(order.id.prefix(6)))"
         dateLabel.text = order.formattedDate
-        trackingLabel.text = "Tracking number: \(order.trackingNumber)"
-        quantityLabel.text = "Quantity: \(order.quantity)"
-        subtotalLabel.text = order.formattedSubtotal
+        trackingLabel.text = "Tracking number: \(String(order.trackingNumber.prefix(6)))"
+        productNameLabel.text = order.productName
         
         statusLabel.text = order.status.rawValue
         switch order.status {

@@ -21,6 +21,7 @@ struct Order {
     let subtotal: Double
     let status: OrderStatus
     let date: Date
+    let productName: String
     
     var formattedDate: String {
         let formatter = DateFormatter()

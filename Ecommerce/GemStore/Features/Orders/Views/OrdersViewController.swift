@@ -170,11 +170,28 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
         }
         
         cell.configure(with: order)
+        cell.delegate = self
         return cell
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 180
+        return 160
+    }
+    
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+        
+        let order: Order
+        switch selectedSegment {
+        case 0: order = viewModel.pendingOrders[indexPath.row]
+        case 1: order = viewModel.deliveredOrders[indexPath.row]
+        case 2: order = viewModel.cancelledOrders[indexPath.row]
+        default: return
+        }
+        
+        let detailViewModel = OrderDetailViewModel(order: order)
+        let detailViewController = OrderDetailViewController(viewModel: detailViewModel)
+        navigationController?.pushViewController(detailViewController, animated: true)
     }
 }
 
@@ -191,6 +208,24 @@ extension OrdersViewController: OrdersViewModelDelegate {
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             self.present(alert, animated: true)
         }
+    }
+}
+
+extension OrdersViewController: OrderCellDelegate {
+    func orderCellDidTapDetails(_ cell: OrderCell) {
+        guard let indexPath = tableView.indexPath(for: cell) else { return }
+        
+        let order: Order
+        switch selectedSegment {
+        case 0: order = viewModel.pendingOrders[indexPath.row]
+        case 1: order = viewModel.deliveredOrders[indexPath.row]
+        case 2: order = viewModel.cancelledOrders[indexPath.row]
+        default: return
+        }
+        
+        let detailViewModel = OrderDetailViewModel(order: order)
+        let detailViewController = OrderDetailViewController(viewModel: detailViewModel)
+        navigationController?.pushViewController(detailViewController, animated: true)
     }
 }
 

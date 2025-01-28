@@ -16,10 +16,11 @@ struct CheckoutPaymentView: View {
     @State private var showAddCard = false
     @State private var showOrderCompleted = false
     
-    init(productPrice: Double, shippingPrice: Double = 0) {
+    init(productPrice: Double, shippingPrice: Double = 0, productName: String) {
         _viewModel = StateObject(wrappedValue: CheckoutPaymentViewModel(
             productPrice: productPrice,
-            shippingPrice: shippingPrice
+            shippingPrice: shippingPrice,
+            productName: productName
         ))
     }
     

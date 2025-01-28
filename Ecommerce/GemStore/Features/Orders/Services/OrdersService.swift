@@ -39,7 +39,8 @@ class OrdersService: OrdersServiceProtocol {
                           let quantity = data["quantity"] as? Int,
                           let subtotal = data["subtotal"] as? Double,
                           let statusRaw = data["status"] as? String,
-                          let timestamp = data["date"] as? Timestamp else {
+                          let timestamp = data["date"] as? Timestamp,
+                          let productName = data["productName"] as? String else {
                         return nil
                     }
                     
@@ -52,7 +53,8 @@ class OrdersService: OrdersServiceProtocol {
                         quantity: quantity,
                         subtotal: subtotal,
                         status: status,
-                        date: date
+                        date: date,
+                        productName: productName
                     )
                 } ?? []
                 
@@ -80,7 +82,8 @@ class OrdersService: OrdersServiceProtocol {
                           let quantity = data["quantity"] as? Int,
                           let subtotal = data["subtotal"] as? Double,
                           let statusRaw = data["status"] as? String,
-                          let timestamp = data["date"] as? Timestamp else {
+                          let timestamp = data["date"] as? Timestamp,
+                          let productName = data["productName"] as? String else {
                         return nil
                     }
                     
@@ -93,7 +96,8 @@ class OrdersService: OrdersServiceProtocol {
                         quantity: quantity,
                         subtotal: subtotal,
                         status: status,
-                        date: date
+                        date: date,
+                        productName: productName
                     )
                 } ?? []
                 
@@ -108,10 +112,18 @@ class OrdersService: OrdersServiceProtocol {
             return
         }
         
-        db.collection("orders").document(order.id).updateData([
+        let orderData: [String: Any] = [
+            "id": order.id,
+            "trackingNumber": order.trackingNumber,
+            "quantity": order.quantity,
+            "subtotal": order.subtotal,
             "status": status.rawValue,
-            "userId": userId
-        ]) { error in
+            "date": Timestamp(date: order.date),
+            "userId": userId,
+            "productName": order.productName
+        ]
+        
+        db.collection("orders").document(order.id).setData(orderData) { error in
             if let error = error {
                 completion(.failure(error))
             } else {

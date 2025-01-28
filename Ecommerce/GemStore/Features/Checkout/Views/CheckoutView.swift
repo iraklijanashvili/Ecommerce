@@ -19,7 +19,10 @@ struct CheckoutView: View {
                     addressSection
                         .padding(.horizontal)
                     
-                    NavigationLink(destination: CheckoutPaymentView(productPrice: viewModel.cartService.totalPrice)) {
+                    NavigationLink(destination: CheckoutPaymentView(
+                        productPrice: viewModel.cartService.totalPrice,
+                        productName: viewModel.cartService.items.first?.product.name ?? "Unknown Product"
+                    )) {
                         Text("Continue to payment")
                             .font(.headline)
                             .foregroundColor(.white)

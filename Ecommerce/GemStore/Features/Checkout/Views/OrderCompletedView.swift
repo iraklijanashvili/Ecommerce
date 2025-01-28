@@ -64,12 +64,6 @@ struct OrderCompletedView: View {
     
     private var navigationBar: some View {
         HStack {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .foregroundColor(.primary)
-                    .imageScale(.large)
-            }
-            
             Spacer()
             
             Text("Check out")
