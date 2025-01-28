@@ -82,7 +82,6 @@ struct ProfileView: View {
                         
                         NavigationLink {
                             WishlistViewControllerWrapper()
-                                .navigationBarBackButtonHidden()
                                 .toolbarBackground(.visible, for: .navigationBar)
                         } label: {
                             ProfileMenuItem(icon: "heart", title: "My Wishlist")

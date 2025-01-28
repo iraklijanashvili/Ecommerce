@@ -95,21 +95,29 @@ struct OrderCompletedView: View {
                 .bold()
             
             if let imageUrl = imageUrl {
-                AsyncImage(url: URL(string: imageUrl)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 120, height: 120)
-                } placeholder: {
-                    ProgressView()
-                        .frame(width: 120, height: 120)
+                AsyncImage(url: URL(string: imageUrl)) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(width: 120, height: 120)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 120, height: 120)
+                    case .failure(_):
+                        Image(systemName: "checkmark.circle.fill")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 120, height: 120)
+                            .foregroundColor(.black)
+                    @unknown default:
+                        EmptyView()
+                    }
                 }
             } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
+                ProgressView()
                     .frame(width: 120, height: 120)
-                    .foregroundColor(.black)
             }
             
             VStack(spacing: 8) {
