@@ -12,7 +12,7 @@ struct Product: Identifiable, Codable {
     let name: String
     let description: String
     let price: Double
-    let imageUrl: String
+    let imageUrl: String?
     let categoryId: String
     let mainCategoryId: String
     let colors: [String]?
@@ -20,6 +20,12 @@ struct Product: Identifiable, Codable {
     private var _types: [String]?
     let inventory: [String: [String: Int]]?
     let collectionType: String?
+    let colorVariants: [String: ColorVariant]?
+    
+    struct ColorVariant: Codable {
+        let image: String
+        let inventory: [String: Int]
+    }
     
     var types: [String]? {
         get { return _types }
@@ -37,12 +43,31 @@ struct Product: Identifiable, Codable {
         "₾\(String(format: "%.2f", price))"
     }
     
+    var defaultImageUrl: String {
+        if let firstColor = colors?.first,
+           let firstColorVariant = colorVariants?[firstColor] {
+            return firstColorVariant.image
+        }
+        return imageUrl ?? ""
+    }
+    
     func getQuantity(for color: String, size: String) -> Int {
+        if let colorVariant = colorVariants?[color] {
+            return colorVariant.inventory[size] ?? 0
+        }
         return inventory?[color]?[size] ?? 0
     }
     
     func isAvailable(color: String, size: String) -> Bool {
         return getQuantity(for: color, size: size) > 0
+    }
+    
+    func getImageUrl(for color: String) -> String {
+        if !color.isEmpty,
+           let colorVariant = colorVariants?[color] {
+            return colorVariant.image
+        }
+        return defaultImageUrl
     }
     
     enum CodingKeys: String, CodingKey {
@@ -58,6 +83,7 @@ struct Product: Identifiable, Codable {
         case _types = "types"
         case inventory
         case collectionType = "collection_type"
+        case colorVariants
     }
     
     init(from decoder: Decoder) throws {
@@ -67,13 +93,14 @@ struct Product: Identifiable, Codable {
         name = try container.decode(String.self, forKey: .name)
         description = try container.decode(String.self, forKey: .description)
         price = try container.decode(Double.self, forKey: .price)
-        imageUrl = try container.decode(String.self, forKey: .imageUrl)
+        imageUrl = try container.decodeIfPresent(String.self, forKey: .imageUrl)
         categoryId = try container.decode(String.self, forKey: .categoryId)
         mainCategoryId = try container.decode(String.self, forKey: .mainCategoryId)
         colors = try container.decodeIfPresent([String].self, forKey: .colors)
         sizes = try container.decodeIfPresent([String].self, forKey: .sizes)
         inventory = try container.decodeIfPresent([String: [String: Int]].self, forKey: .inventory)
         collectionType = try container.decodeIfPresent(String.self, forKey: .collectionType)
+        colorVariants = try container.decodeIfPresent([String: ColorVariant].self, forKey: .colorVariants)
         
         if let typesArray = try? container.decode([String].self, forKey: ._types) {
             _types = typesArray

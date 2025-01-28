@@ -21,6 +21,7 @@ protocol ProductDetailsViewModelProtocol {
     var isAddToCartEnabled: Bool { get }
     var isFavorite: Bool { get }
     var isAddToCartEnabledPublisher: AnyPublisher<Bool, Never> { get }
+    var currentImageUrl: String { get }
     
     func selectColor(_ color: ProductColor)
     func selectSize(_ size: String)
@@ -34,6 +35,7 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
     @Published var selectedSize: String?
     @Published var isFavorite: Bool = false
     @Published var isAddToCartEnabled: Bool = false
+    @Published private(set) var currentImageUrl: String
     
     private let favoritesService: FavoritesService
     private let cartService: CartServiceProtocol
@@ -62,6 +64,35 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
         self.favoritesService = favoritesService
         self.cartService = cartService
         
+        if let defaultImageUrl = product.imageUrl {
+            self.currentImageUrl = defaultImageUrl
+        } else {
+            self.currentImageUrl = ""
+        }
+        
+        if let firstColor = product.colors?.first.flatMap(ProductColor.fromString) {
+            self.selectedColor = firstColor
+            if let colorVariant = product.colorVariants?[firstColor.rawValue] {
+                self.currentImageUrl = colorVariant.image
+            }
+            
+            if let sizes = product.sizes {
+                for size in sizes {
+                    if let colorVariant = product.colorVariants?[firstColor.rawValue],
+                       let quantity = colorVariant.inventory[size],
+                       quantity > 0 {
+                        self.selectedSize = size
+                        break
+                    } else if let inventory = product.inventory?[firstColor.rawValue],
+                              let quantity = inventory[size],
+                              quantity > 0 {
+                        self.selectedSize = size
+                        break
+                    }
+                }
+            }
+        }
+        
         Task {
             await checkFavoriteStatus()
         }
@@ -71,15 +102,25 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
     
     private func setupBindings() {
         Publishers.CombineLatest($selectedColor, $selectedSize)
-            .map { color, size in
-                guard let color = color,
-                      let size = size,
-                      let inventory = self.product.inventory,
-                      let sizeInventory = inventory[color.rawValue],
-                      let quantity = sizeInventory[size] else {
+            .map { [weak self] color, size in
+                guard let self = self,
+                      let color = color,
+                      let size = size else {
                     return false
                 }
-                return quantity > 0
+                
+                if let colorVariant = self.product.colorVariants?[color.rawValue],
+                   let quantity = colorVariant.inventory[size] {
+                    return quantity > 0
+                }
+                
+                if let inventory = self.product.inventory,
+                   let sizeInventory = inventory[color.rawValue],
+                   let quantity = sizeInventory[size] {
+                    return quantity > 0
+                }
+                
+                return false
             }
             .receive(on: DispatchQueue.main)
             .assign(to: &$isAddToCartEnabled)
@@ -101,6 +142,29 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
     
     func selectColor(_ color: ProductColor) {
         selectedColor = color
+        
+        if let colorVariant = product.colorVariants?[color.rawValue] {
+            currentImageUrl = colorVariant.image
+        } else {
+            currentImageUrl = product.imageUrl ?? ""
+        }
+        
+        if let sizes = product.sizes {
+            for size in sizes {
+                if let colorVariant = product.colorVariants?[color.rawValue],
+                   let quantity = colorVariant.inventory[size],
+                   quantity > 0 {
+                    selectedSize = size
+                    break
+                } else if let inventory = product.inventory?[color.rawValue],
+                          let quantity = inventory[size],
+                          quantity > 0 {
+                    selectedSize = size
+                    break
+                }
+            }
+        }
+        
         delegate?.productDetailsViewModelDidUpdate()
     }
     

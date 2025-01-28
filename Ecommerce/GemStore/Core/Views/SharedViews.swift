@@ -64,7 +64,7 @@ struct SharedProductCard: View {
     }
     
     private func loadImage() {
-        ImageCacheService.shared.loadImage(from: product.imageUrl) { loadedImage in
+        ImageCacheService.shared.loadImage(from: product.defaultImageUrl) { loadedImage in
             self.image = loadedImage
         }
     }

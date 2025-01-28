@@ -5,7 +5,6 @@
 //  Created by Imac on 21.01.25.
 //
 
-
 import UIKit
 
 protocol FilterViewControllerDelegate: AnyObject {
@@ -418,73 +417,5 @@ extension FilterViewController: FilterViewModelDelegate {
     
     func filterViewModelDidApply(_ filter: FilterOptions) {
         delegate?.filterViewController(self, didApplyFilter: filter)
-    }
-}
-
-class ColorCell: UICollectionViewCell {
-    private let colorView: UIView = {
-        let view = UIView()
-        view.layer.cornerRadius = 15
-        view.layer.borderWidth = 2
-        view.layer.borderColor = UIColor.clear.cgColor
-        view.layer.shadowColor = UIColor.gray.cgColor
-        view.layer.shadowOffset = CGSize(width: 0, height: 0)
-        view.layer.shadowRadius = 2
-        view.layer.shadowOpacity = 0.3
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
-    private var colorViewConstraints: [NSLayoutConstraint] = []
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
-        setupUI()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    private func setupUI() {
-        contentView.addSubview(colorView)
-        updateColorViewConstraints(isSelected: false)
-    }
-    
-    private func updateColorViewConstraints(isSelected: Bool) {
-        NSLayoutConstraint.deactivate(colorViewConstraints)
-        
-        let size: CGFloat = isSelected ? 34 : 30
-        
-        colorViewConstraints = [
-            colorView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            colorView.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
-            colorView.widthAnchor.constraint(equalToConstant: size),
-            colorView.heightAnchor.constraint(equalToConstant: size)
-        ]
-        
-        NSLayoutConstraint.activate(colorViewConstraints)
-    }
-    
-    func configure(with color: ProductColor, isSelected: Bool) {
-        colorView.backgroundColor = color.uiColor
-        
-        if color == .white {
-            colorView.layer.borderWidth = 1
-            colorView.layer.borderColor = UIColor.gray.cgColor
-        } else {
-            colorView.layer.borderWidth = isSelected ? 2 : 0
-            colorView.layer.borderColor = isSelected ? UIColor.black.cgColor : UIColor.clear.cgColor
-        }
-        
-        updateColorViewConstraints(isSelected: isSelected)
-    }
-    
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        colorView.backgroundColor = nil
-        colorView.layer.borderColor = UIColor.clear.cgColor
-        colorView.layer.borderWidth = 0
-        updateColorViewConstraints(isSelected: false)
     }
 } 

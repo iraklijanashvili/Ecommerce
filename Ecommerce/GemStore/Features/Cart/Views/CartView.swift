@@ -134,12 +134,16 @@ struct CartItemView: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            AsyncImage(url: URL(string: item.product.imageUrl)) { image in
+            AsyncImage(url: URL(string: item.product.getImageUrl(for: item.selectedColor.rawValue))) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Color.gray.opacity(0.3)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(.white)
+                    )
             }
             .frame(width: 120, height: 120)
             .cornerRadius(12)

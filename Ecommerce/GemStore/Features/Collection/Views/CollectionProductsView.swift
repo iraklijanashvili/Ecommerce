@@ -98,7 +98,7 @@ private struct CollectionProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            AsyncImage(url: URL(string: product.imageUrl)) { phase in
+            AsyncImage(url: URL(string: product.defaultImageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
@@ -143,7 +143,7 @@ struct CollectionProductDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                AsyncImage(url: URL(string: product.imageUrl)) { phase in
+                AsyncImage(url: URL(string: product.defaultImageUrl)) { phase in
                     switch phase {
                     case .empty:
                         ProgressView()

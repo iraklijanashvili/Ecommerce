@@ -115,11 +115,9 @@ class ProductCell: UICollectionViewCell {
         titleLabel.text = product.name
         priceLabel.text = "$\(product.price)"
         
-        if let url = URL(string: product.imageUrl) {
-            ImageCacheService.shared.loadImage(from: product.imageUrl) { [weak self] image in
-                DispatchQueue.main.async {
-                    self?.imageView.image = image
-                }
+        ImageCacheService.shared.loadImage(from: product.defaultImageUrl) { [weak self] image in
+            DispatchQueue.main.async {
+                self?.imageView.image = image
             }
         }
         

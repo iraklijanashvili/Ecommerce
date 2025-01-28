@@ -187,7 +187,6 @@ extension OrdersViewController: OrdersViewModelDelegate {
     
     func didEncounterError(_ error: Error) {
         DispatchQueue.main.async {
-            // Show error alert
             let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
             alert.addAction(UIAlertAction(title: "OK", style: .default))
             self.present(alert, animated: true)

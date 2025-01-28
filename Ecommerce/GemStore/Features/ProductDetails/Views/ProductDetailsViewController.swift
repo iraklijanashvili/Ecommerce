@@ -337,7 +337,7 @@ class ProductDetailsViewController: UIViewController {
         priceLabel.text = product.formattedPrice
         descriptionLabel.text = product.description
         
-        ImageCacheService.shared.loadImage(from: product.imageUrl) { [weak self] image in
+        ImageCacheService.shared.loadImage(from: viewModel.currentImageUrl) { [weak self] image in
             DispatchQueue.main.async {
                 self?.imageView.image = image
             }
@@ -445,5 +445,74 @@ class SizeCell: UICollectionViewCell {
         contentView.layer.borderColor = isSelected ? UIColor.black.cgColor : UIColor.gray.cgColor
         contentView.backgroundColor = isSelected ? .black : .white
         label.textColor = isSelected ? .white : .black
+    }
+}
+
+class ColorCell: UICollectionViewCell {
+    private let colorView: UIView = {
+        let view = UIView()
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.layer.cornerRadius = 16
+        view.layer.masksToBounds = true
+        return view
+    }()
+    
+    private let checkmarkImageView: UIImageView = {
+        let imageView = UIImageView(image: UIImage(systemName: "checkmark"))
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        imageView.tintColor = .white
+        imageView.isHidden = true
+        return imageView
+    }()
+    
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupUI()
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    private func setupUI() {
+        contentView.addSubview(colorView)
+        colorView.addSubview(checkmarkImageView)
+        
+        NSLayoutConstraint.activate([
+            colorView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 4),
+            colorView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 4),
+            colorView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
+            colorView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
+            
+            checkmarkImageView.centerXAnchor.constraint(equalTo: colorView.centerXAnchor),
+            checkmarkImageView.centerYAnchor.constraint(equalTo: colorView.centerYAnchor),
+            checkmarkImageView.widthAnchor.constraint(equalToConstant: 16),
+            checkmarkImageView.heightAnchor.constraint(equalToConstant: 16)
+        ])
+    }
+    
+    func configure(with color: ProductColor, isSelected: Bool) {
+        colorView.backgroundColor = color.uiColor
+        checkmarkImageView.isHidden = !isSelected
+        
+        if color == .white {
+            colorView.layer.borderWidth = 1
+            colorView.layer.borderColor = UIColor.gray.cgColor
+        } else {
+            colorView.layer.borderWidth = 0
+        }
+        
+        contentView.layer.borderWidth = isSelected ? 2 : 0
+        contentView.layer.borderColor = color.uiColor.cgColor
+        contentView.layer.cornerRadius = 20
+        
+        if isSelected {
+            switch color {
+            case .black, .blue:
+                checkmarkImageView.tintColor = .white
+            default:
+                checkmarkImageView.tintColor = .black
+            }
+        }
     }
 } 
