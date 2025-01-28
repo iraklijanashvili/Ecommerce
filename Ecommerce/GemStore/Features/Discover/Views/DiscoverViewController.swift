@@ -38,12 +38,28 @@ class DiscoverViewController: UIViewController {
         fatalError("init(coder:) has not been implemented")
     }
     
+    func selectCategory(_ category: Category) {
+        expandedCategoryId = category.id
+        if let index = viewModel.categories.firstIndex(where: { $0.id == category.id }) {
+            let indexPath = IndexPath(item: 0, section: index)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.collectionView.scrollToItem(at: indexPath, at: .top, animated: true)
+            }
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
         setupBindings()
         viewModel.fetchCategories()
         viewModel.fetchAllProducts()
+        
+        if let savedCategoryData = UserDefaults.standard.data(forKey: "selectedCategory"),
+           let savedCategory = try? JSONDecoder().decode(Category.self, from: savedCategoryData) {
+            UserDefaults.standard.removeObject(forKey: "selectedCategory")
+            selectCategory(savedCategory)
+        }
     }
     
     private func setupUI() {

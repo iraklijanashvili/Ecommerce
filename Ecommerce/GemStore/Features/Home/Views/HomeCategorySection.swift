@@ -9,14 +9,20 @@ import SwiftUI
 
 struct HomeCategorySection: View {
     let categories: [Category]
+    @Binding var selectedTab: Int
+    @State private var selectedCategory: Category?
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
                 ForEach(categories) { category in
-                    NavigationLink(destination: CategoryProductsView(categoryId: category.id, title: category.name)) {
-                        CategoryCard(category: category)
-                    }
+                    CategoryCard(category: category)
+                        .onTapGesture {
+                            if let encoded = try? JSONEncoder().encode(category) {
+                                UserDefaults.standard.set(encoded, forKey: "selectedCategory")
+                            }
+                            selectedTab = 1 
+                        }
                 }
             }
             .padding(.horizontal)
@@ -57,6 +63,48 @@ private struct CategoryCard: View {
                 .multilineTextAlignment(.center)
         }
         .frame(width: 100)
+    }
+}
+
+struct DiscoverViewControllerWrapper: UIViewControllerRepresentable {
+    let selectedCategory: Category
+    @Environment(\.presentationMode) var presentationMode
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        let viewModel = DiscoverViewModel()
+        let viewController = DiscoverViewController(viewModel: viewModel)
+        
+        let navigationController = UINavigationController(rootViewController: viewController)
+        
+        viewController.selectCategory(selectedCategory)
+        
+        let closeButton = UIBarButtonItem(
+            image: UIImage(systemName: "xmark"),
+            style: .plain,
+            target: context.coordinator,
+            action: #selector(Coordinator.dismiss)
+        )
+        viewController.navigationItem.leftBarButtonItem = closeButton
+        
+        return navigationController
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject {
+        let parent: DiscoverViewControllerWrapper
+        
+        init(_ parent: DiscoverViewControllerWrapper) {
+            self.parent = parent
+        }
+        
+        @objc func dismiss() {
+            parent.presentationMode.wrappedValue.dismiss()
+        }
     }
 }
 

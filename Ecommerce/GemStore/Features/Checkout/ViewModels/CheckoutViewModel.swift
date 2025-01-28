@@ -52,7 +52,9 @@ class CheckoutViewModel: ObservableObject {
     }
     
     private func loadShippingData() async {
-        isLoading = true
+        await MainActor.run {
+            self.isLoading = true
+        }
         do {
             async let countriesTask = shippingService.fetchCountries()
             async let methodsTask = shippingService.fetchShippingMethods()
@@ -63,12 +65,12 @@ class CheckoutViewModel: ObservableObject {
                 self.countries = countries
                 self.shippingMethods = methods
                 self.selectedCountry = countries.first ?? "Georgia"
-                isLoading = false
+                self.isLoading = false
             }
         } catch {
             await MainActor.run {
                 self.errorMessage = error.localizedDescription
-                isLoading = false
+                self.isLoading = false
             }
         }
     }
@@ -88,6 +90,7 @@ class CheckoutViewModel: ObservableObject {
         .map { cartTotal, shippingPrice in
             cartTotal + shippingPrice
         }
+        .receive(on: DispatchQueue.main)
         .assign(to: &$totalAmount)
     }
     

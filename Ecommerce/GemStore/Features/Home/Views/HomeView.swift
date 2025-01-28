@@ -10,6 +10,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject private var viewModel = HomeViewModel()
+    @Binding var selectedTab: Int
     
     var body: some View {
         GeometryReader { geometry in
@@ -26,7 +27,7 @@ struct HomeView: View {
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 20) {
                             if !viewModel.categories.isEmpty {
-                                HomeCategorySection(categories: viewModel.categories)
+                                HomeCategorySection(categories: viewModel.categories, selectedTab: $selectedTab)
                                     .padding(.top, 65)
                             }
                             
