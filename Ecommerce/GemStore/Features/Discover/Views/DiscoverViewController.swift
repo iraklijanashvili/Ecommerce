@@ -12,7 +12,7 @@ class DiscoverViewController: UIViewController {
     private let favoritesService: FavoritesService
     private var isShowingFilteredProducts = false
     private var currentCategoryId: String?
-    private var expandedCategoryId: String?
+    var expandedCategoryId: String?
     
     private let searchView = DiscoverSearchView()
     private let emptyStateView = DiscoverEmptyStateView()
@@ -39,11 +39,40 @@ class DiscoverViewController: UIViewController {
     }
     
     func selectCategory(_ category: Category) {
-        expandedCategoryId = category.id
-        if let index = viewModel.categories.firstIndex(where: { $0.id == category.id }) {
-            let indexPath = IndexPath(item: 0, section: index)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.collectionView.scrollToItem(at: indexPath, at: .top, animated: true)
+        expandedCategoryId = nil
+        currentCategoryId = nil
+        isShowingFilteredProducts = false
+        collectionView.reloadData()
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            self.expandedCategoryId = category.id
+            
+            if let index = self.viewModel.categories.firstIndex(where: { $0.id == category.id }) {
+                let indexPath = IndexPath(item: 0, section: index)
+                self.collectionView.scrollToItem(at: indexPath, at: .top, animated: true)
+                
+                let isLastCategory = index == self.viewModel.categories.count - 1
+                
+                UIView.animate(withDuration: 0.3) {
+                    self.collectionView.performBatchUpdates({
+                        self.collectionView.reloadSections(IndexSet(integer: index))
+                    }) { _ in
+                        if isLastCategory {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                let contentHeight = self.collectionView.contentSize.height
+                                let visibleHeight = self.collectionView.bounds.height
+                                let bottomOffset = max(0, contentHeight - visibleHeight)
+                                
+                                self.collectionView.setContentOffset(
+                                    CGPoint(x: 0, y: bottomOffset),
+                                    animated: true
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
     }

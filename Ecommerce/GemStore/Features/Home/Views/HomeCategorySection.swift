@@ -10,23 +10,26 @@ import SwiftUI
 struct HomeCategorySection: View {
     let categories: [Category]
     @Binding var selectedTab: Int
-    @State private var selectedCategory: Category?
+    @StateObject private var categoryManager = CategorySelectionManager.shared
+    
+    private let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                ForEach(categories) { category in
-                    CategoryCard(category: category)
-                        .onTapGesture {
-                            if let encoded = try? JSONEncoder().encode(category) {
-                                UserDefaults.standard.set(encoded, forKey: "selectedCategory")
-                            }
-                            selectedTab = 1 
-                        }
-                }
+        LazyVGrid(columns: columns, spacing: 16) {
+            ForEach(categories) { category in
+                CategoryCard(category: category)
+                    .onTapGesture {
+                        categoryManager.selectCategory(category)
+                        selectedTab = 1
+                    }
             }
-            .padding(.horizontal)
         }
+        .padding(.horizontal)
     }
 }
 
@@ -34,7 +37,7 @@ private struct CategoryCard: View {
     let category: Category
     
     var body: some View {
-        VStack {
+        VStack(spacing: 4) {
             AsyncImage(url: URL(string: category.imageUrl)) { phase in
                 switch phase {
                 case .empty:
@@ -53,16 +56,16 @@ private struct CategoryCard: View {
                     EmptyView()
                 }
             }
-            .frame(width: 100, height: 100)
+            .frame(width: 60, height: 60)
             .clipShape(Circle())
             
             Text(category.name)
-                .font(.caption)
+                .font(.caption2)
                 .foregroundColor(.black)
-                .lineLimit(2)
+                .lineLimit(1)
                 .multilineTextAlignment(.center)
         }
-        .frame(width: 100)
+        .frame(maxWidth: .infinity)
     }
 }
 

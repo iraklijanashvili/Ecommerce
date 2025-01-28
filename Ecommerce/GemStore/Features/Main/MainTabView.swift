@@ -8,8 +8,27 @@
 
 import SwiftUI
 
+class CategorySelectionManager: ObservableObject {
+    @Published private(set) var selectedCategory: Category?
+    static let shared = CategorySelectionManager()
+    private init() {}
+    
+    func selectCategory(_ category: Category) {
+        DispatchQueue.main.async {
+            self.selectedCategory = category
+        }
+    }
+    
+    func clearSelection() {
+        DispatchQueue.main.async {
+            self.selectedCategory = nil
+        }
+    }
+}
+
 struct MainTabView: View {
     @State private var selectedTab = 0
+    @StateObject private var categoryManager = CategorySelectionManager.shared
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -20,7 +39,7 @@ struct MainTabView: View {
                 }
                 .tag(0)
             
-            DiscoverViewControllerRepresentable()
+            DiscoverViewControllerRepresentable(categoryManager: categoryManager)
                 .tabItem {
                     Image(systemName: selectedTab == 1 ? "magnifyingglass.circle.fill" : "magnifyingglass.circle")
                     Text("Discover")
@@ -45,10 +64,18 @@ struct MainTabView: View {
 }
 
 struct DiscoverViewControllerRepresentable: UIViewControllerRepresentable {
+    @ObservedObject var categoryManager: CategorySelectionManager
+    
     func makeUIViewController(context: Context) -> DiscoverViewController {
-        return DiscoverViewController()
+        let viewController = DiscoverViewController()
+        return viewController
     }
     
     func updateUIViewController(_ uiViewController: DiscoverViewController, context: Context) {
+        if let category = categoryManager.selectedCategory {
+            categoryManager.clearSelection()
+            uiViewController.expandedCategoryId = nil
+            uiViewController.selectCategory(category)
+        }
     }
 }
