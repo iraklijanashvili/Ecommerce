@@ -173,7 +173,18 @@ extension DiscoverViewController: DiscoverSearchViewDelegate {
     }
     
     func searchView(_ searchView: DiscoverSearchView, didUpdateSearchText text: String) {
-        viewModel.search(query: text)
+        if text.isEmpty {
+            isShowingFilteredProducts = false
+            currentCategoryId = nil
+            searchView.setBackButtonVisible(false)
+            viewModel.resetFilter()
+            viewModel.fetchAllProducts()
+        } else {
+            viewModel.search(query: text)
+            isShowingFilteredProducts = true
+            searchView.setBackButtonVisible(true)
+        }
+        collectionView.reloadData()
     }
 }
 
@@ -200,6 +211,9 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
         let sections = isShowingFilteredProducts ? 1 : viewModel.categories.count
         let isEmpty = isShowingFilteredProducts && viewModel.filteredProducts.isEmpty
         emptyStateView.isHidden = !isEmpty
+        
+        collectionView.isHidden = isEmpty
+        
         return sections
     }
     

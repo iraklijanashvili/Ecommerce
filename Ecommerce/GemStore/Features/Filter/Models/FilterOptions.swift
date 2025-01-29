@@ -22,11 +22,16 @@ enum SortOption {
 
 enum ProductCategory: String, CaseIterable {
     case jackets = "jackets"
-    case hoodies = "hoodies"
+    case hoodies = "hoodie"
     case dresses = "dresses"
     
     var displayName: String {
-        rawValue.capitalized
+        switch self {
+        case .hoodies:
+            return "Hoodies"
+        default:
+            return rawValue.capitalized
+        }
     }
     
     static func fromString(_ string: String) -> ProductCategory? {

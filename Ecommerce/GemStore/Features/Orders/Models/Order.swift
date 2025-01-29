@@ -30,6 +30,6 @@ struct Order {
     }
     
     var formattedSubtotal: String {
-        return "$\(String(format: "%.2f", subtotal))"
+        return "$\(Int(subtotal))"
     }
 } 

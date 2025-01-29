@@ -16,6 +16,17 @@ struct ProductSection: View {
         case regular
         case compact
         case featured
+        
+        var cardStyle: ProductCardStyle {
+            switch self {
+            case .regular:
+                return .regular
+            case .compact:
+                return .compact
+            case .featured:
+                return .featured
+            }
+        }
     }
     
     init(
@@ -36,14 +47,7 @@ struct ProductSection: View {
                 HStack(spacing: 15) {
                     ForEach(products) { product in
                         NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: true)) {
-                            switch style {
-                            case .regular:
-                                RegularProductCard(product: product)
-                            case .compact:
-                                CompactProductCard(product: product)
-                            case .featured:
-                                FeaturedProductCard(product: product)
-                            }
+                            BaseProductCard(product: product, style: style.cardStyle)
                         }
                     }
                 }

@@ -30,7 +30,7 @@ struct CartView: View {
                             
                             Spacer()
                             
-                            Text(viewModel.totalPrice, format: .currency(code: "USD"))
+                            Text("$\(Int(viewModel.totalPrice))")
                                 .font(.title3)
                                 .fontWeight(.semibold)
                         }

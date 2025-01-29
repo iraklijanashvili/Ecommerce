@@ -40,7 +40,7 @@ struct Product: Identifiable, Codable {
     }
     
     var formattedPrice: String {
-        "₾\(String(format: "%.2f", price))"
+        "$\(Int(price))"
     }
     
     var defaultImageUrl: String {

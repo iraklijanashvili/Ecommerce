@@ -34,7 +34,7 @@ class FilterViewModel {
     }
     
     var priceRangeText: String {
-        return "₾\(Int(currentPriceRange.min)) - ₾\(Int(currentPriceRange.max))"
+        return "$\(Int(currentPriceRange.min)) - $\(Int(currentPriceRange.max))"
     }
     
     var availableCategories: [ProductCategory] {

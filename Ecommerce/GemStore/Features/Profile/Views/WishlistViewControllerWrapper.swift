@@ -1,5 +1,5 @@
 //
-//  WishlistViewModel.swift
+//  WishlistViewControllerWrapper.swift
 //  Ecommerce
 //
 //  Created by Imac on 23.01.25.

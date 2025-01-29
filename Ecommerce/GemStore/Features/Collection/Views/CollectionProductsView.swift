@@ -33,9 +33,9 @@ struct CollectionProductsView: View {
                 .padding()
                 
                 if viewModel.isLoading {
-                    ProgressView()
+                    LoadingView()
                 } else if let error = viewModel.error {
-                    SharedErrorView(error: error) {
+                    RetryView(error: error) {
                         Task {
                             print("🔄 Retrying fetch for collectionType: \(collectionType)")
                             await viewModel.fetchProducts(forCollection: collectionType)
@@ -43,15 +43,11 @@ struct CollectionProductsView: View {
                     }
                 } else {
                     if viewModel.products.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "doc.text.magnifyingglass")
-                                .font(.system(size: 50))
-                                .foregroundColor(.gray)
-                            Text("No products found")
-                                .font(.headline)
-                                .foregroundColor(.gray)
-                        }
-                        .padding(.top, 100)
+                        EmptyStateView(
+                            title: "No Products Found",
+                            message: "There are no products available in this collection.",
+                            systemImage: "doc.text.magnifyingglass"
+                        )
                         .onAppear {
                             print("⚠️ Showing empty state for collectionType: \(collectionType)")
                         }
@@ -62,7 +58,7 @@ struct CollectionProductsView: View {
                         ], spacing: 16) {
                             ForEach(viewModel.products) { product in
                                 NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: false)) {
-                                    SharedProductCard(product: product)
+                                    BaseProductCard(product: product, style: .grid)
                                 }
                             }
                         }

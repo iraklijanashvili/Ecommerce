@@ -15,10 +15,10 @@ class ProductFilterServiceImpl: ProductFilterService {
         
         if !filter.selectedCategories.isEmpty {
             filtered = filtered.filter { product in
-                guard let productCategory = ProductCategory.fromString(product.categoryId) else {
-                    return false
+                let productCategoryId = product.categoryId.lowercased()
+                return filter.selectedCategories.contains { category in
+                    productCategoryId == category.rawValue.lowercased()
                 }
-                return filter.selectedCategories.contains(productCategory)
             }
         }
         
@@ -27,8 +27,9 @@ class ProductFilterServiceImpl: ProductFilterService {
                 guard let productColors = product.colors else {
                     return false
                 }
-                let productColorEnums = productColors.compactMap { ProductColor.fromString($0) }
-                return !Set(productColorEnums).isDisjoint(with: filter.selectedColors)
+                let productColorStrings = productColors.map { $0.lowercased() }
+                let selectedColorStrings = filter.selectedColors.map { $0.rawValue.lowercased() }
+                return !Set(productColorStrings).isDisjoint(with: Set(selectedColorStrings))
             }
         }
         
@@ -36,19 +37,18 @@ class ProductFilterServiceImpl: ProductFilterService {
             let query = searchQuery.lowercased()
             filtered = filtered.filter { product in
                 product.name.lowercased().contains(query) ||
-                product.description.lowercased().contains(query)
+                product.description.lowercased().contains(query) ||
+                product.categoryId.lowercased().contains(query) ||
+                product.mainCategoryId.lowercased().contains(query) ||
+                (ProductCategory.fromString(product.categoryId)?.displayName.lowercased().contains(query) ?? false)
             }
         }
         
         switch filter.sortBy {
         case .priceHighToLow:
-            filtered.sort { (product1: Product, product2: Product) in
-                product1.price > product2.price
-            }
+            filtered.sort { $0.price > $1.price }
         case .priceLowToHigh:
-            filtered.sort { (product1: Product, product2: Product) in
-                product1.price < product2.price
-            }
+            filtered.sort { $0.price < $1.price }
         case .none:
             break
         }

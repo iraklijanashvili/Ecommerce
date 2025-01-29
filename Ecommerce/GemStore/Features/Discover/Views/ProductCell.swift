@@ -113,7 +113,7 @@ class ProductCell: UICollectionViewCell {
         self.product = product
         self.showFavoriteButton = showFavorite
         titleLabel.text = product.name
-        priceLabel.text = "$\(product.price)"
+        priceLabel.text = "$\(Int(product.price))"
         
         ImageCacheService.shared.loadImage(from: product.defaultImageUrl) { [weak self] image in
             DispatchQueue.main.async {
