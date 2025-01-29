@@ -15,57 +15,61 @@ class CollectionProductsViewModel: ObservableObject {
     @Published var error: Error?
     
     private let db = Firestore.firestore()
+    private let firestoreService: FirestoreService
     
     private static var productCache: [String: [Product]] = [:]
     
+    init(firestoreService: FirestoreService = FirestoreServiceImpl()) {
+        self.firestoreService = firestoreService
+    }
+    
     func fetchProducts(forCollection collectionType: String) async {
+        print("🔍 Starting to fetch products for collectionType: \(collectionType)")
         isLoading = true
         error = nil
         
-        let categoryId = collectionType.replacingOccurrences(of: "_collection", with: "collection")
-        
-        if let cachedProducts = Self.productCache[categoryId] {
-            print("Using cached products for categoryId: \(categoryId)")
+        if let cachedProducts = Self.productCache[collectionType] {
+            print("📦 Using cached products for type: \(collectionType), count: \(cachedProducts.count)")
             products = cachedProducts
             isLoading = false
             return
         }
         
         do {
-            let snapshot = try await db.collection("products")
-                .whereField("categoryId", isEqualTo: categoryId)
-                .getDocuments()
+            let allProducts = try await firestoreService.fetchProducts()
+            print("📥 Fetched \(allProducts.count) total products")
             
-            print("Fetching products for categoryId: \(categoryId)")
-            print("Found \(snapshot.documents.count) products")
-            
-            let fetchedProducts = snapshot.documents.compactMap { document in
-                do {
-                    var data = document.data()
-                    data["id"] = document.documentID
-                    return try Firestore.Decoder().decode(Product.self, from: data)
-                } catch {
-                    print("Error decoding product: \(error)")
-                    return nil
-                }
+            let filteredProducts: [Product]
+            if collectionType == "featured" {
+                print("🏷 Filtering featured products")
+                filteredProducts = firestoreService.getFeaturedProducts(from: allProducts)
+            } else if collectionType == "recommended" {
+                print("🏷 Filtering recommended products")
+                filteredProducts = firestoreService.getRecommendedProducts(from: allProducts)
+            } else {
+                print("📁 Getting products for category: \(collectionType)")
+                filteredProducts = try await firestoreService.getProducts(for: collectionType)
             }
             
-            Self.productCache[categoryId] = fetchedProducts
-            products = fetchedProducts
+            print("✅ Found \(filteredProducts.count) products for \(collectionType)")
+            Self.productCache[collectionType] = filteredProducts
+            products = filteredProducts
             
         } catch {
-            print("Error fetching products: \(error)")
+            print("❌ Error fetching products: \(error)")
             self.error = error
         }
         
         isLoading = false
     }
     
-    func clearCache(for categoryId: String? = nil) {
-        if let categoryId = categoryId {
-            Self.productCache.removeValue(forKey: categoryId)
+    func clearCache(for type: String? = nil) {
+        if let type = type {
+            Self.productCache.removeValue(forKey: type)
+            print("🗑 Cleared cache for type: \(type)")
         } else {
             Self.productCache.removeAll()
+            print("🗑 Cleared all cache")
         }
     }
 } 

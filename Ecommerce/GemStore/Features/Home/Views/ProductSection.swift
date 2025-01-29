@@ -30,7 +30,7 @@ struct ProductSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            SectionHeader(title: title)
+            SectionHeader(title: title, style: style)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 15) {
@@ -55,6 +55,7 @@ struct ProductSection: View {
 
 private struct SectionHeader: View {
     let title: String
+    let style: ProductSection.Style
     
     var body: some View {
         HStack {
@@ -62,9 +63,21 @@ private struct SectionHeader: View {
                 .font(.headline)
                 .foregroundColor(.black)
             Spacer()
-            NavigationLink("Show all", destination: ProductListView())
-                .font(.caption)
-                .foregroundColor(.gray)
+            let collectionType = style == .featured ? "featured" : "recommended"
+            NavigationLink(
+                destination: CollectionProductsView(
+                    collectionType: collectionType,
+                    title: title,
+                    isFromHomePage: true
+                )
+            ) {
+                Text("Show all")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .onAppear {
+                print("🔍 Navigation Link created with collectionType: \(collectionType)")
+            }
         }
         .padding(.horizontal)
     }
@@ -214,11 +227,5 @@ private struct FeaturedProductCard: View {
         .background(Color.white)
         .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-}
-
-private struct ProductListView: View {
-    var body: some View {
-        Text("All Products")
     }
 } 

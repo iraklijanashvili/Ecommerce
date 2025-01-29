@@ -48,14 +48,6 @@ struct ProfileView: View {
                             }
                             
                             Spacer()
-                            
-                            NavigationLink {
-                                Text("Settings")
-                            } label: {
-                                Image(systemName: "gearshape.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                            }
                         }
                     }
                     .padding(.horizontal)

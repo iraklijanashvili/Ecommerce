@@ -105,35 +105,13 @@ struct HomeView: View {
 private struct CustomNavigationBar: View {
     var body: some View {
         HStack {
-            MenuButton()
-            
             Spacer()
             
             Text("GemStore")
                 .font(.headline)
             
             Spacer()
-            
-            NotificationButton()
         }
         .padding()
-    }
-}
-
-private struct MenuButton: View {
-    var body: some View {
-        Button(action: {}) {
-            Image(systemName: "line.horizontal.3")
-                .foregroundColor(.primary)
-        }
-    }
-}
-
-private struct NotificationButton: View {
-    var body: some View {
-        Button(action: {}) {
-            Image(systemName: "bell")
-                .foregroundColor(.primary)
-        }
     }
 }

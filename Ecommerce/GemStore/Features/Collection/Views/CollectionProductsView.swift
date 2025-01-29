@@ -37,6 +37,7 @@ struct CollectionProductsView: View {
                 } else if let error = viewModel.error {
                     SharedErrorView(error: error) {
                         Task {
+                            print("🔄 Retrying fetch for collectionType: \(collectionType)")
                             await viewModel.fetchProducts(forCollection: collectionType)
                         }
                     }
@@ -51,6 +52,9 @@ struct CollectionProductsView: View {
                                 .foregroundColor(.gray)
                         }
                         .padding(.top, 100)
+                        .onAppear {
+                            print("⚠️ Showing empty state for collectionType: \(collectionType)")
+                        }
                     } else {
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
@@ -63,12 +67,16 @@ struct CollectionProductsView: View {
                             }
                         }
                         .padding()
+                        .onAppear {
+                            print("✅ Showing \(viewModel.products.count) products for collectionType: \(collectionType)")
+                        }
                     }
                 }
             }
         }
         .navigationBarHidden(true)
         .onAppear {
+            print("🔵 CollectionProductsView appeared for collectionType: \(collectionType)")
             Task {
                 await viewModel.fetchProducts(forCollection: collectionType)
             }
