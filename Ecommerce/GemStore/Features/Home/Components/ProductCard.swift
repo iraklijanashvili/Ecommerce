@@ -37,11 +37,18 @@ struct ProductCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
                     .font(.headline)
+                    .foregroundColor(.black)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(product.formattedPrice)
                     .font(.subheadline)
-                    .bold()
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
             }
+            .frame(height: 50)
+            .frame(maxWidth: .infinity)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
         }
@@ -49,4 +56,4 @@ struct ProductCard: View {
         .cornerRadius(10)
         .shadow(radius: 2)
     }
-} 
+}

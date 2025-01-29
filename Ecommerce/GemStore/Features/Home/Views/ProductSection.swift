@@ -16,17 +16,6 @@ struct ProductSection: View {
         case regular
         case compact
         case featured
-        
-        var cardStyle: ProductCardStyle {
-            switch self {
-            case .regular:
-                return .regular
-            case .compact:
-                return .compact
-            case .featured:
-                return .featured
-            }
-        }
     }
     
     init(
@@ -47,11 +36,19 @@ struct ProductSection: View {
                 HStack(spacing: 15) {
                     ForEach(products) { product in
                         NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: true)) {
-                            BaseProductCard(product: product, style: style.cardStyle)
+                            switch style {
+                            case .regular:
+                                RegularProductCard(product: product)
+                            case .compact:
+                                CompactProductCard(product: product)
+                            case .featured:
+                                FeaturedProductCard(product: product)
+                            }
                         }
                     }
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 10)
             }
         }
     }
@@ -215,13 +212,16 @@ private struct FeaturedProductCard: View {
                 Text(product.name)
                     .font(.system(size: 16))
                     .foregroundColor(.black)
-                    .lineLimit(2)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(width: 164)
                 
                 Text(product.formattedPrice)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.black)
             }
             .padding(.horizontal, 8)
+            .frame(height: 50)
         }
         .frame(width: 180)
         .overlay(

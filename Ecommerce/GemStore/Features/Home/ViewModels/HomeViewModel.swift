@@ -60,12 +60,6 @@ class HomeViewModel: ObservableObject {
         print("Loading completed")
     }
     
-    var mainBanners: [Banner] {
-        let filtered = banners.filter { $0.type == "main" }
-        print("Filtering main banners. Count: \(filtered.count)")
-        return filtered
-    }
-    
     var newCollectionBanner: Banner? {
         let banner = banners.first { $0.type == "new_collection" }
         print("New collection banner found: \(banner != nil)")

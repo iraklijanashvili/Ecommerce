@@ -11,6 +11,7 @@ struct HomeCategorySection: View {
     let categories: [Category]
     @Binding var selectedTab: Int
     @StateObject private var categoryManager = CategorySelectionManager.shared
+    @StateObject private var viewModel = HomeCategoryViewModel()
     
     private let columns = [
         GridItem(.flexible()),
@@ -22,7 +23,7 @@ struct HomeCategorySection: View {
     var body: some View {
         LazyVGrid(columns: columns, spacing: 16) {
             ForEach(categories) { category in
-                CategoryCard(category: category)
+                CategoryCard(category: category, iconUrl: viewModel.categoryIcons[category.id])
                     .onTapGesture {
                         categoryManager.selectCategory(category)
                         selectedTab = 1
@@ -30,22 +31,30 @@ struct HomeCategorySection: View {
             }
         }
         .padding(.horizontal)
+        .onAppear {
+            Task {
+                await viewModel.fetchCategoryIcons()
+            }
+        }
     }
 }
 
 private struct CategoryCard: View {
     let category: Category
+    let iconUrl: String?
     
     var body: some View {
         VStack(spacing: 4) {
-            AsyncImage(url: URL(string: category.imageUrl)) { phase in
+            AsyncImage(url: URL(string: iconUrl ?? category.imageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
+                        .frame(width: 45, height: 45)
                 case .success(let image):
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .aspectRatio(contentMode: .fit)
+                        .scaleEffect(0.7)
                 case .failure:
                     Color.gray
                         .overlay(
@@ -56,8 +65,12 @@ private struct CategoryCard: View {
                     EmptyView()
                 }
             }
-            .frame(width: 60, height: 60)
+            .frame(width: 45, height: 45)
             .clipShape(Circle())
+            .overlay(
+                Circle()
+                    .stroke(Color.black.opacity(0.2), lineWidth: 0.5)
+            )
             
             Text(category.name)
                 .font(.caption2)

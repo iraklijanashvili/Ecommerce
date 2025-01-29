@@ -21,15 +21,12 @@ struct Banner: Identifiable, Codable {
     }
     
     enum BannerType: String {
-        case main = "main"
         case newCollection = "new_collection"
         case topCollection = "top_collection"
         case summerCollection = "summer_collection"
         
         var displayTitle: String {
             switch self {
-            case .main:
-                return "Main"
             case .newCollection:
                 return "New Collection"
             case .topCollection:

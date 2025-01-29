@@ -65,8 +65,6 @@ struct BannerView: View {
                     title: bannerType.displayTitle,
                     isFromHomePage: true
                 )
-            case .main:
-                EmptyView()
             }
         } else {
             EmptyView()

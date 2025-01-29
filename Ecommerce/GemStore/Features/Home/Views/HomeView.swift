@@ -31,15 +31,16 @@ struct HomeView: View {
                                     .padding(.top, 65)
                             }
                             
-                            if !viewModel.mainBanners.isEmpty {
-                                TabView {
-                                    ForEach(viewModel.mainBanners) { banner in
-                                        BannerView(banner: banner)
-                                    }
-                                }
-                                .frame(height: 200)
-                                .tabViewStyle(.page)
-                                .padding(.horizontal)
+                            if let topCollectionBanner = viewModel.topCollectionBanner {
+                                Text("Top Collection")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                
+                                BannerView(banner: topCollectionBanner)
+                                    .frame(height: 200)
+                                    .padding(.horizontal)
                             }
                             
                             if !viewModel.featuredProducts.isEmpty {
@@ -51,11 +52,15 @@ struct HomeView: View {
                             }
                             
                             if let newCollectionBanner = viewModel.newCollectionBanner {
+                                Text("New Collection")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal)
+                                
                                 BannerView(banner: newCollectionBanner)
                                     .padding(.horizontal)
                             }
-                            
-                   
                             
                             if !viewModel.recommendedProducts.isEmpty {
                                 ProductSection(
@@ -63,22 +68,15 @@ struct HomeView: View {
                                     products: viewModel.recommendedProducts,
                                     style: .compact
                                 )
-                                
-                                
                             }
                             
-                            if let topCollectionBanner = viewModel.topCollectionBanner {
-                                Text("Top Collection")
+                            if let summerCollectionBanner = viewModel.summerCollectionBanner {
+                                Text("Summer Collection")
                                     .font(.headline)
                                     .foregroundColor(.black)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.horizontal)
                                 
-                                BannerView(banner: topCollectionBanner)
-                                    .padding(.horizontal)
-                            }
-                            
-                            if let summerCollectionBanner = viewModel.summerCollectionBanner {
                                 BannerView(banner: summerCollectionBanner)
                                     .padding(.horizontal)
                             }

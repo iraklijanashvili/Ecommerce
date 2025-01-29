@@ -18,7 +18,6 @@
 		88065DB72D4A5EEE006EAC2B /* UserFavorite.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D342D4A5EEE006EAC2B /* UserFavorite.swift */; };
 		88065DB82D4A5EEE006EAC2B /* Banner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D352D4A5EEE006EAC2B /* Banner.swift */; };
 		88065DB92D4A5EEE006EAC2B /* ViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D372D4A5EEE006EAC2B /* ViewModifiers.swift */; };
-		88065DBA2D4A5EEE006EAC2B /* BaseProductCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D392D4A5EEE006EAC2B /* BaseProductCard.swift */; };
 		88065DBB2D4A5EEE006EAC2B /* CustomTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D3A2D4A5EEE006EAC2B /* CustomTextField.swift */; };
 		88065DBC2D4A5EEE006EAC2B /* ProductCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D3B2D4A5EEE006EAC2B /* ProductCardView.swift */; };
 		88065DBD2D4A5EEE006EAC2B /* LoadingAndEmptyViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065D3C2D4A5EEE006EAC2B /* LoadingAndEmptyViews.swift */; };
@@ -93,6 +92,7 @@
 		88065E022D4A5EEE006EAC2B /* FilterOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065DAC2D4A5EEE006EAC2B /* FilterOptions.swift */; };
 		88065E032D4A5EEE006EAC2B /* FilterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065DAE2D4A5EEE006EAC2B /* FilterViewController.swift */; };
 		88065E042D4A5EEE006EAC2B /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88065DB02D4A5EEE006EAC2B /* MainTabView.swift */; };
+		884D8D752D4ACE860088E58B /* HomeCategoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 884D8D742D4ACE860088E58B /* HomeCategoryViewModel.swift */; };
 		885F1CC92D37F9F30090DCD6 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 885F1CC82D37F9F30090DCD6 /* FirebaseFirestore */; };
 		88B7854C2D36A16C0066B394 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 88B7854B2D36A16C0066B394 /* FirebaseAuth */; };
 		88B7854F2D36A2640066B394 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 88B7854E2D36A2640066B394 /* GoogleSignIn */; };
@@ -120,7 +120,6 @@
 		88065D342D4A5EEE006EAC2B /* UserFavorite.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserFavorite.swift; sourceTree = "<group>"; };
 		88065D352D4A5EEE006EAC2B /* Banner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Banner.swift; sourceTree = "<group>"; };
 		88065D372D4A5EEE006EAC2B /* ViewModifiers.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewModifiers.swift; sourceTree = "<group>"; };
-		88065D392D4A5EEE006EAC2B /* BaseProductCard.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BaseProductCard.swift; sourceTree = "<group>"; };
 		88065D3A2D4A5EEE006EAC2B /* CustomTextField.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomTextField.swift; sourceTree = "<group>"; };
 		88065D3B2D4A5EEE006EAC2B /* ProductCardView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ProductCardView.swift; sourceTree = "<group>"; };
 		88065D3C2D4A5EEE006EAC2B /* LoadingAndEmptyViews.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadingAndEmptyViews.swift; sourceTree = "<group>"; };
@@ -195,6 +194,7 @@
 		88065DAC2D4A5EEE006EAC2B /* FilterOptions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FilterOptions.swift; sourceTree = "<group>"; };
 		88065DAE2D4A5EEE006EAC2B /* FilterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FilterViewController.swift; sourceTree = "<group>"; };
 		88065DB02D4A5EEE006EAC2B /* MainTabView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		884D8D742D4ACE860088E58B /* HomeCategoryViewModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeCategoryViewModel.swift; sourceTree = "<group>"; };
 		88B785522D36A3720066B394 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		88B786152D36B26F0066B394 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -314,7 +314,6 @@
 		88065D382D4A5EEE006EAC2B /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				88065D392D4A5EEE006EAC2B /* BaseProductCard.swift */,
 				88065D3A2D4A5EEE006EAC2B /* CustomTextField.swift */,
 				88065D3B2D4A5EEE006EAC2B /* ProductCardView.swift */,
 				88065D3C2D4A5EEE006EAC2B /* LoadingAndEmptyViews.swift */,
@@ -388,6 +387,7 @@
 		88065D4F2D4A5EEE006EAC2B /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				884D8D742D4ACE860088E58B /* HomeCategoryViewModel.swift */,
 				88065D502D4A5EEE006EAC2B /* HomeViewModel.swift */,
 				88065D512D4A5EEE006EAC2B /* BannerProductsViewModel.swift */,
 			);
@@ -887,9 +887,9 @@
 				88065DB12D4A5EEE006EAC2B /* FirestoreRepository.swift in Sources */,
 				88065DB92D4A5EEE006EAC2B /* ViewModifiers.swift in Sources */,
 				88065DCC2D4A5EEE006EAC2B /* BannerProductsViewModel.swift in Sources */,
-				88065DBA2D4A5EEE006EAC2B /* BaseProductCard.swift in Sources */,
 				88065E022D4A5EEE006EAC2B /* FilterOptions.swift in Sources */,
 				88065DBC2D4A5EEE006EAC2B /* ProductCardView.swift in Sources */,
+				884D8D752D4ACE860088E58B /* HomeCategoryViewModel.swift in Sources */,
 				88065DDD2D4A5EEE006EAC2B /* SignUpViewModel.swift in Sources */,
 				88065DE62D4A5EEE006EAC2B /* AddCardView.swift in Sources */,
 				88065DE82D4A5EEE006EAC2B /* CheckoutViewModel.swift in Sources */,

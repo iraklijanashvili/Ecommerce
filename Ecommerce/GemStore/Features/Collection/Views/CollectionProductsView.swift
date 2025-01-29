@@ -58,7 +58,7 @@ struct CollectionProductsView: View {
                         ], spacing: 16) {
                             ForEach(viewModel.products) { product in
                                 NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: false)) {
-                                    BaseProductCard(product: product, style: .grid)
+                                    ProductCard(product: product)
                                 }
                             }
                         }
