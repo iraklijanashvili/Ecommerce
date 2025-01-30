@@ -80,7 +80,12 @@ private struct SectionHeader: View {
                 Text("Show all")
                     .font(.caption)
                     .foregroundColor(.gray)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(12)
             }
+            .buttonStyle(ScaleButtonStyle())
             .onAppear {
                 print("🔍 Navigation Link created with collectionType: \(collectionType)")
             }

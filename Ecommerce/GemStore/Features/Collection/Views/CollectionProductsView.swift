@@ -27,12 +27,20 @@ struct CollectionProductsView: View {
             VStack {
                 HStack {
                     Button(action: {
-                        presentationMode.wrappedValue.dismiss()
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            presentationMode.wrappedValue.dismiss()
+                        }
                     }) {
                         Image(systemName: "chevron.left")
                             .foregroundColor(.black)
                             .imageScale(.large)
+                            .padding(8)
+                            .background(Color.white)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
                     }
+                    .buttonStyle(ScaleButtonStyle())
+                    
                     Spacer()
                     Text(title)
                         .font(.headline)
@@ -42,6 +50,7 @@ struct CollectionProductsView: View {
                 
                 if viewModel.isLoading {
                     LoadingView()
+                        .transition(.opacity)
                 } else if let error = viewModel.error {
                     RetryView(error: error) {
                         Task {
@@ -53,6 +62,7 @@ struct CollectionProductsView: View {
                             }
                         }
                     }
+                    .transition(.opacity)
                 } else {
                     if viewModel.products.isEmpty {
                         EmptyStateView(
@@ -63,6 +73,7 @@ struct CollectionProductsView: View {
                         .onAppear {
                             print("⚠️ Showing empty state for collectionType: \(collectionType)")
                         }
+                        .transition(.opacity)
                     } else {
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
@@ -71,6 +82,7 @@ struct CollectionProductsView: View {
                             ForEach(viewModel.products) { product in
                                 NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: false)) {
                                     ProductCard(product: product)
+                                        .transition(.opacity)
                                 }
                             }
                         }
@@ -93,6 +105,14 @@ struct CollectionProductsView: View {
                 }
             }
         }
+    }
+}
+
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
