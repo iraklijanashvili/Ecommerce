@@ -62,7 +62,7 @@ class FirestoreServiceImpl: FirestoreService {
         }
         
         let components = categoryId.components(separatedBy: "/")
-        let mainCategory = components[0]
+        let mainCategory = components[0].lowercased()
         let isAllSubcategory = components.count == 2 && components[1].lowercased() == "all"
         
         print("\n🔍 DEBUG - Category request:")

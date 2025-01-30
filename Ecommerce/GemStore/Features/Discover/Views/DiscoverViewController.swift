@@ -197,9 +197,15 @@ class DiscoverViewController: UIViewController {
             return
         }
         
-        print("🔍 Fetching products for subcategory: \(subcategory.id)")
-        let fullPath = subcategory.id.lowercased()
-        viewModel.fetchProducts(for: fullPath)
+        let categoryPath: String
+        if subcategory.name.lowercased() == "all" {
+            categoryPath = "\(category.id.lowercased())/all"
+        } else {
+            categoryPath = subcategory.id.lowercased()
+        }
+        
+        print("🔍 Fetching products for path: \(categoryPath)")
+        viewModel.fetchProducts(for: categoryPath)
         
         isShowingFilteredProducts = true
         searchView.setBackButtonVisible(true)
@@ -350,42 +356,40 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
         
         let category = viewModel.categories[indexPath.section]
         if indexPath.item == 0 {
-            let wasExpanded = (expandedCategoryId == category.id)
             let previouslyExpandedId = expandedCategoryId
-            expandedCategoryId = wasExpanded ? nil : category.id
+            let wasExpanded = (previouslyExpandedId == category.id)
             
-            var sectionsToReload = IndexSet(integer: indexPath.section)
-            if let previousSection = viewModel.categories.firstIndex(where: { $0.id == previouslyExpandedId }) {
-                sectionsToReload.insert(previousSection)
-            }
-            
-            let isLastCategory = indexPath.section == viewModel.categories.count - 1
-            
-            UIView.animate(withDuration: 0.3) { [weak self] in
-                self?.collectionView.performBatchUpdates({
-                    self?.collectionView.reloadSections(sectionsToReload)
-                }) { _ in
-                    if !wasExpanded {
-                        DispatchQueue.main.async { [weak self] in
-                            guard let self = self else { return }
-                            
-                            let targetIndexPath = IndexPath(item: 1, section: indexPath.section)
-                            if let attributes = self.collectionView.layoutAttributesForItem(at: targetIndexPath) {
-                                let targetRect = attributes.frame
-                                
-                                if isLastCategory {
-                                    let extraScroll: CGFloat = 200
-                                    let adjustedRect = CGRect(
-                                        x: targetRect.origin.x,
-                                        y: targetRect.origin.y,
-                                        width: targetRect.width,
-                                        height: targetRect.height + extraScroll
-                                    )
-                                    self.collectionView.scrollRectToVisible(adjustedRect, animated: true)
-                                } else {
-                                    self.collectionView.scrollRectToVisible(targetRect, animated: true)
-                                }
-                            }
+            if wasExpanded {
+                expandedCategoryId = nil
+                collectionView.performBatchUpdates({
+                    collectionView.reloadSections(IndexSet(integer: indexPath.section))
+                })
+            } else {
+                expandedCategoryId = category.id
+                
+                collectionView.performBatchUpdates({
+                    if let previousSection = self.viewModel.categories.firstIndex(where: { $0.id == previouslyExpandedId }) {
+                        collectionView.reloadSections(IndexSet(integer: previousSection))
+                    }
+                    collectionView.reloadSections(IndexSet(integer: indexPath.section))
+                }) { [weak self] _ in
+                    guard let self = self else { return }
+                    
+                    if let attributes = self.collectionView.layoutAttributesForItem(at: IndexPath(item: 1, section: indexPath.section)) {
+                        let targetRect = attributes.frame
+                        let isLastCategory = indexPath.section == self.viewModel.categories.count - 1
+                        
+                        if isLastCategory {
+                            let extraScroll: CGFloat = 200
+                            let adjustedRect = CGRect(
+                                x: targetRect.origin.x,
+                                y: targetRect.origin.y,
+                                width: targetRect.width,
+                                height: targetRect.height + extraScroll
+                            )
+                            self.collectionView.scrollRectToVisible(adjustedRect, animated: true)
+                        } else {
+                            self.collectionView.scrollRectToVisible(targetRect, animated: true)
                         }
                     }
                 }
@@ -395,7 +399,12 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
             let subcategory = category.subcategoryArray[indexPath.item - 1]
             currentCategoryId = subcategory.id
             
-            selectSubcategory(for: category, subcategory: subcategory)
+            collectionView.performBatchUpdates({
+                collectionView.reloadSections(IndexSet(integer: indexPath.section))
+            }) { [weak self] _ in
+                guard let self = self else { return }
+                self.selectSubcategory(for: category, subcategory: subcategory)
+            }
         }
     }
 }
