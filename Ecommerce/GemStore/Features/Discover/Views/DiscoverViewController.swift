@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class DiscoverViewController: UIViewController {
     private let viewModel: DiscoverViewModelProtocol
@@ -149,6 +150,60 @@ class DiscoverViewController: UIViewController {
         let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "OK", style: .default))
         present(alert, animated: true)
+    }
+    
+    func selectSubcategory(for category: Category, subcategory: Category.Subcategory) {
+        print("\n🔍 Selected subcategory:")
+        print("- Category ID: \(category.id)")
+        print("- Subcategory ID: \(subcategory.id)")
+        print("- Subcategory name: \(subcategory.name)")
+        
+        if category.id.lowercased() == "collection" {
+            if subcategory.name.lowercased() == "all" {
+                print("📦 Fetching all collection products")
+                let collectionVC = UIHostingController(
+                    rootView: CollectionProductsView(
+                        collectionType: "collections_all",
+                        title: "All Collections",
+                        isFromHomePage: false,
+                        includeTypes: ["top_collection", "new_collection", "summer_collection"]
+                    )
+                )
+                navigationController?.pushViewController(collectionVC, animated: true)
+                return
+            }
+            
+            let collectionType: String
+            switch subcategory.name.lowercased() {
+            case "top collecttion":
+                collectionType = "top_collection"
+            case "new collecttion":
+                collectionType = "new_collection"
+            case "summer collection":
+                collectionType = "summer_collection"
+            default:
+                collectionType = subcategory.id.lowercased()
+            }
+            
+            print("🎯 Navigating to collection: \(collectionType)")
+            let collectionVC = UIHostingController(
+                rootView: CollectionProductsView(
+                    collectionType: collectionType,
+                    title: subcategory.name,
+                    isFromHomePage: false
+                )
+            )
+            navigationController?.pushViewController(collectionVC, animated: true)
+            return
+        }
+        
+        print("🔍 Fetching products for subcategory: \(subcategory.id)")
+        let fullPath = subcategory.id.lowercased()
+        viewModel.fetchProducts(for: fullPath)
+        
+        isShowingFilteredProducts = true
+        searchView.setBackButtonVisible(true)
+        collectionView.reloadData()
     }
 }
 
@@ -340,24 +395,7 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
             let subcategory = category.subcategoryArray[indexPath.item - 1]
             currentCategoryId = subcategory.id
             
-            print("\n🔍 Selected subcategory:")
-            print("- Category ID: \(category.id)")
-            print("- Subcategory ID: \(subcategory.id)")
-            print("- Subcategory name: \(subcategory.name)")
-            
-            if subcategory.name.lowercased() == "all" {
-                print("📦 Fetching all products for category: \(category.id)")
-                let fullPath = "\(category.id)/all"
-                viewModel.fetchProducts(for: fullPath)
-            } else {
-                print("🔍 Fetching products for subcategory: \(subcategory.id)")
-                let fullPath = subcategory.id.lowercased()
-                viewModel.fetchProducts(for: fullPath)
-            }
-            
-            isShowingFilteredProducts = true
-            searchView.setBackButtonVisible(true)
-            collectionView.reloadData()
+            selectSubcategory(for: category, subcategory: subcategory)
         }
     }
 }

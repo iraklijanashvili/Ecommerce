@@ -11,8 +11,16 @@ struct CollectionProductsView: View {
     let collectionType: String
     let title: String
     let isFromHomePage: Bool
+    let includeTypes: [String]?
     @StateObject private var viewModel = CollectionProductsViewModel()
     @Environment(\.presentationMode) var presentationMode
+    
+    init(collectionType: String, title: String, isFromHomePage: Bool, includeTypes: [String]? = nil) {
+        self.collectionType = collectionType
+        self.title = title
+        self.isFromHomePage = isFromHomePage
+        self.includeTypes = includeTypes
+    }
     
     var body: some View {
         ScrollView {
@@ -38,7 +46,11 @@ struct CollectionProductsView: View {
                     RetryView(error: error) {
                         Task {
                             print("🔄 Retrying fetch for collectionType: \(collectionType)")
-                            await viewModel.fetchProducts(forCollection: collectionType)
+                            if let types = includeTypes {
+                                await viewModel.fetchProducts(forCollections: types)
+                            } else {
+                                await viewModel.fetchProducts(forCollection: collectionType)
+                            }
                         }
                     }
                 } else {
@@ -74,7 +86,11 @@ struct CollectionProductsView: View {
         .onAppear {
             print("🔵 CollectionProductsView appeared for collectionType: \(collectionType)")
             Task {
-                await viewModel.fetchProducts(forCollection: collectionType)
+                if let types = includeTypes {
+                    await viewModel.fetchProducts(forCollections: types)
+                } else {
+                    await viewModel.fetchProducts(forCollection: collectionType)
+                }
             }
         }
     }

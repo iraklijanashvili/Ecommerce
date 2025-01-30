@@ -42,6 +42,25 @@ class FirestoreServiceImpl: FirestoreService {
     func getProducts(for categoryId: String) async throws -> [Product] {
         let productsRef = db.collection("products")
         
+        if ["new_collection", "top_collection", "summer_collection"].contains(categoryId) {
+            print("\n🔍 Fetching collection products for: \(categoryId)")
+            let snapshot = try await productsRef
+                .whereField("types", arrayContains: categoryId)
+                .getDocuments()
+            
+            print("\n📝 Query results:")
+            print("- Found \(snapshot.documents.count) products")
+            
+            let products = try snapshot.documents.map { document in
+                var product = try Firestore.Decoder().decode(Product.self, from: document.data())
+                product.id = document.documentID
+                return product
+            }
+            
+            print("\n✅ Successfully decoded \(products.count) products")
+            return products
+        }
+        
         let components = categoryId.components(separatedBy: "/")
         let mainCategory = components[0]
         let isAllSubcategory = components.count == 2 && components[1].lowercased() == "all"

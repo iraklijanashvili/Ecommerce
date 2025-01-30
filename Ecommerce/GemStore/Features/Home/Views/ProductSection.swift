@@ -33,22 +33,27 @@ struct ProductSection: View {
             SectionHeader(title: title, style: style)
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 15) {
+                LazyHStack(alignment: .top, spacing: 16) {
                     ForEach(products) { product in
                         NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: true)) {
                             switch style {
                             case .regular:
                                 RegularProductCard(product: product)
+                                    .frame(width: 150)
+                                    .fixedSize(horizontal: true, vertical: false)
                             case .compact:
                                 CompactProductCard(product: product)
+                                    .frame(width: 213)
+                                    .fixedSize(horizontal: true, vertical: false)
                             case .featured:
                                 FeaturedProductCard(product: product)
+                                    .frame(width: 180)
+                                    .fixedSize(horizontal: true, vertical: false)
                             }
                         }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 10)
+                .padding(.horizontal, 16)
             }
         }
     }
@@ -88,45 +93,55 @@ private struct RegularProductCard: View {
     let product: Product
     
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 8) {
             AsyncImage(url: URL(string: product.defaultImageUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
+                        .frame(width: 150, height: 200)
+                        .background(Color.gray.opacity(0.1))
                 case .success(let image):
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .scaledToFill()
+                        .frame(width: 150, height: 200)
+                        .clipped()
                 case .failure(_):
                     Color.gray
                         .overlay(
                             Image(systemName: "photo")
                                 .foregroundColor(.white)
                         )
+                        .frame(width: 150, height: 200)
                 @unknown default:
                     EmptyView()
+                        .frame(width: 150, height: 200)
                 }
             }
             .frame(width: 150, height: 200)
             .clipped()
             
-            Text(product.name)
-                .font(.caption)
-                .foregroundColor(.black)
-                .lineLimit(1)
-            
-            Text(product.formattedPrice)
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundColor(.black)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.caption)
+                    .foregroundColor(.black)
+                    .lineLimit(1)
+                
+                Text(product.formattedPrice)
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(.black)
+            }
+            .frame(width: 150)
+            .padding(.horizontal, 8)
         }
-        .frame(width: 150)
+        .frame(width: 150, height: 260)
+        .background(Color.white)
+        .cornerRadius(10)
         .overlay(
             RoundedRectangle(cornerRadius: 10)
                 .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
         )
-        .background(Color.white)
-        .cornerRadius(10)
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
@@ -140,18 +155,23 @@ private struct CompactProductCard: View {
                 switch phase {
                 case .empty:
                     ProgressView()
+                        .frame(width: 66, height: 66)
+                        .background(Color.gray.opacity(0.1))
                 case .success(let image):
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
+                        .frame(width: 66, height: 66)
                 case .failure(_):
                     Color.gray
                         .overlay(
                             Image(systemName: "photo")
                                 .foregroundColor(.white)
                         )
+                        .frame(width: 66, height: 66)
                 @unknown default:
                     EmptyView()
+                        .frame(width: 66, height: 66)
                 }
             }
             .frame(width: 66, height: 66)
@@ -191,18 +211,23 @@ private struct FeaturedProductCard: View {
                 switch phase {
                 case .empty:
                     ProgressView()
+                        .frame(maxWidth: 180, maxHeight: 240)
                 case .success(let image):
                     image
                         .resizable()
-                        .aspectRatio(contentMode: .fill)
+                        .scaledToFill()
+                        .frame(maxWidth: 180, maxHeight: 240)
+                        .clipped()
                 case .failure(_):
                     Color.gray
                         .overlay(
                             Image(systemName: "photo")
                                 .foregroundColor(.white)
                         )
+                        .frame(maxWidth: 180, maxHeight: 240)
                 @unknown default:
                     EmptyView()
+                        .frame(maxWidth: 180, maxHeight: 240)
                 }
             }
             .frame(width: 180, height: 240)
@@ -224,12 +249,12 @@ private struct FeaturedProductCard: View {
             .frame(height: 50)
         }
         .frame(width: 180)
+        .background(Color.white)
+        .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
         )
-        .background(Color.white)
-        .cornerRadius(12)
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 } 

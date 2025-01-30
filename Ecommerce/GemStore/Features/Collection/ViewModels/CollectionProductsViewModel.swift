@@ -63,6 +63,41 @@ class CollectionProductsViewModel: ObservableObject {
         isLoading = false
     }
     
+    func fetchProducts(forCollections collectionTypes: [String]) async {
+        print("🔍 Starting to fetch products for collections: \(collectionTypes)")
+        isLoading = true
+        error = nil
+        
+        let cacheKey = "collections_" + collectionTypes.joined(separator: "_")
+        if let cachedProducts = Self.productCache[cacheKey] {
+            print("📦 Using cached products for collections, count: \(cachedProducts.count)")
+            products = cachedProducts
+            isLoading = false
+            return
+        }
+        
+        do {
+            var allCollectionProducts: [Product] = []
+            
+            for collectionType in collectionTypes {
+                let collectionProducts = try await firestoreService.getProducts(for: collectionType)
+                allCollectionProducts.append(contentsOf: collectionProducts)
+            }
+            
+            let uniqueProducts = Array(Set(allCollectionProducts))
+            print("✅ Found \(uniqueProducts.count) unique products across all collections")
+            
+            Self.productCache[cacheKey] = uniqueProducts
+            products = uniqueProducts
+            
+        } catch {
+            print("❌ Error fetching collection products: \(error)")
+            self.error = error
+        }
+        
+        isLoading = false
+    }
+    
     func clearCache(for type: String? = nil) {
         if let type = type {
             Self.productCache.removeValue(forKey: type)

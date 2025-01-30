@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Product: Identifiable, Codable {
+struct Product: Identifiable, Codable, Hashable {
     var id: String
     let name: String
     let description: String
@@ -40,7 +40,10 @@ struct Product: Identifiable, Codable {
     }
     
     var formattedPrice: String {
-        "$\(Int(price))"
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencySymbol = "$"
+        return formatter.string(from: NSNumber(value: price)) ?? "$\(price)"
     }
     
     var defaultImageUrl: String {
@@ -68,6 +71,14 @@ struct Product: Identifiable, Codable {
             return colorVariant.image
         }
         return defaultImageUrl
+    }
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: Product, rhs: Product) -> Bool {
+        return lhs.id == rhs.id
     }
     
     enum CodingKeys: String, CodingKey {
