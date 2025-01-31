@@ -54,7 +54,6 @@ struct CollectionProductsView: View {
                 } else if let error = viewModel.error {
                     RetryView(error: error) {
                         Task {
-                            print("🔄 Retrying fetch for collectionType: \(collectionType)")
                             if let types = includeTypes {
                                 await viewModel.fetchProducts(forCollections: types)
                             } else {
@@ -71,7 +70,6 @@ struct CollectionProductsView: View {
                             systemImage: "doc.text.magnifyingglass"
                         )
                         .onAppear {
-                            print("⚠️ Showing empty state for collectionType: \(collectionType)")
                         }
                         .transition(.opacity)
                     } else {
@@ -88,7 +86,6 @@ struct CollectionProductsView: View {
                         }
                         .padding()
                         .onAppear {
-                            print("✅ Showing \(viewModel.products.count) products for collectionType: \(collectionType)")
                         }
                     }
                 }
@@ -96,7 +93,6 @@ struct CollectionProductsView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            print("🔵 CollectionProductsView appeared for collectionType: \(collectionType)")
             Task {
                 if let types = includeTypes {
                     await viewModel.fetchProducts(forCollections: types)

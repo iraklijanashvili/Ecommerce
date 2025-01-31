@@ -63,27 +63,14 @@ struct CartView: View {
     private var cartItemsSection: some View {
         VStack {
             if viewModel.items.isEmpty {
-                VStack(spacing: 20) {
-                    Image(systemName: "cart.badge.minus")
-                        .font(.system(size: 70))
-                        .foregroundColor(.gray)
-                    
-                    Text("Your cart is empty")
-                        .font(.title2)
-                        .foregroundColor(.gray)
-                    
-                    Text("Items you add to your cart will appear here")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
+                EmptyCartView()
             } else {
                 VStack(spacing: 20) {
                     ForEach(viewModel.items) { item in
-                        CartItemView(item: item) { quantity in
-                            viewModel.updateQuantity(itemId: item.id, quantity: quantity)
-                        }
+                        CartItemView(
+                            item: item,
+                            updateHandler: viewModel
+                        )
                     }
                 }
                 .padding(.horizontal)
@@ -153,69 +140,112 @@ struct CartView: View {
     }
 }
 
-struct CartItemView: View {
-    let item: CartItem
-    let onQuantityChange: (Int) -> Void
+private struct EmptyCartView: View {
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "cart.badge.minus")
+                .font(.system(size: 70))
+                .foregroundColor(.gray)
+            
+            Text("Your cart is empty")
+                .font(.title2)
+                .foregroundColor(.gray)
+            
+            Text("Items you add to your cart will appear here")
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
+    }
+}
+
+private struct CartItemView: View {
+    @StateObject private var viewModel: CartItemViewModel
+    
+    init(item: CartItem, updateHandler: CartItemUpdateHandler) {
+        _viewModel = StateObject(wrappedValue: CartItemViewModel(
+            item: item,
+            updateHandler: updateHandler
+        ))
+    }
     
     var body: some View {
-        HStack(spacing: 16) {
-            AsyncImage(url: URL(string: item.product.getImageUrl(for: item.selectedColor.rawValue))) { image in
+        HStack(alignment: .center, spacing: 12) {
+            productImage
+            
+            VStack(alignment: .leading, spacing: 4) {
+                productInfo
+                quantityControls
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+    }
+    
+    private var productImage: some View {
+        AsyncImage(url: URL(string: viewModel.item.product.defaultImageUrl)) { phase in
+            switch phase {
+            case .empty:
+                ProgressView()
+                    .frame(width: 80, height: 80)
+            case .success(let image):
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Color.gray.opacity(0.3)
-                    .overlay(
-                        Image(systemName: "photo")
-                            .foregroundColor(.white)
-                    )
-            }
-            .frame(width: 120, height: 120)
-            .cornerRadius(12)
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text(item.product.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Text("$\(Int(item.product.price))")
-                    .font(.title3)
-                    .bold()
-                
-                Text("Size: \(item.selectedSize) | Color: \(item.selectedColor.rawValue.capitalized)")
-                    .font(.subheadline)
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            case .failure:
+                Image(systemName: "photo")
                     .foregroundColor(.gray)
-                    .lineLimit(1)
-                
-                HStack(spacing: 16) {
-                    Button(action: {
-                        onQuantityChange(item.quantity - 1)
-                    }) {
-                        Image(systemName: "minus")
-                            .foregroundColor(.black)
-                            .frame(width: 32, height: 32)
-                    }
-                    
-                    Text("\(item.quantity)")
-                        .frame(width: 30)
-                        .font(.headline)
-                    
-                    Button(action: {
-                        onQuantityChange(item.quantity + 1)
-                    }) {
-                        Image(systemName: "plus")
-                            .foregroundColor(.black)
-                            .frame(width: 32, height: 32)
-                    }
-                }
-                .background(Color(.systemGray6))
-                .cornerRadius(8)
+                    .frame(width: 80, height: 80)
+            @unknown default:
+                EmptyView()
             }
-            .padding(.vertical, 8)
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(12)
+        .frame(width: 80, height: 80)
+    }
+    
+    private var productInfo: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(viewModel.item.product.name)
+                .font(.headline)
+                .lineLimit(2)
+            
+            Text(String(format: "$%.2f", viewModel.totalPrice))
+                .font(.subheadline)
+                .foregroundColor(.black)
+        }
+    }
+    
+    private var quantityControls: some View {
+        HStack(spacing: 16) {
+            Button(action: viewModel.decrementQuantity) {
+                Image(systemName: "minus.circle.fill")
+                    .foregroundColor(.black)
+            }
+            .disabled(viewModel.isUpdating)
+            
+            Text("\(viewModel.quantity)")
+                .font(.headline)
+            
+            Button(action: viewModel.incrementQuantity) {
+                Image(systemName: "plus.circle.fill")
+                    .foregroundColor(.black)
+            }
+            .disabled(viewModel.isUpdating)
+            
+            Spacer()
+            
+            Button(action: viewModel.removeItem) {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
+            }
+            .disabled(viewModel.isUpdating)
+        }
+        .padding(.top, 8)
     }
 } 

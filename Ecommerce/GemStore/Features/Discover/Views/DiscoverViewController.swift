@@ -2,7 +2,7 @@
 //  DiscoverViewController.swift
 //  Ecommerce
 //
-//  Created by Imac on 13.01.25.
+//  Created by Imac on 31.01.25.
 //
 
 import UIKit
@@ -153,14 +153,10 @@ class DiscoverViewController: UIViewController {
     }
     
     func selectSubcategory(for category: Category, subcategory: Category.Subcategory) {
-        print("\n🔍 Selected subcategory:")
-        print("- Category ID: \(category.id)")
-        print("- Subcategory ID: \(subcategory.id)")
-        print("- Subcategory name: \(subcategory.name)")
+
         
         if category.id.lowercased() == "collection" {
             if subcategory.name.lowercased() == "all" {
-                print("📦 Fetching all collection products")
                 let collectionVC = UIHostingController(
                     rootView: CollectionProductsView(
                         collectionType: "collections_all",
@@ -185,7 +181,6 @@ class DiscoverViewController: UIViewController {
                 collectionType = subcategory.id.lowercased()
             }
             
-            print("🎯 Navigating to collection: \(collectionType)")
             let collectionVC = UIHostingController(
                 rootView: CollectionProductsView(
                     collectionType: collectionType,
@@ -204,7 +199,6 @@ class DiscoverViewController: UIViewController {
             categoryPath = subcategory.id.lowercased()
         }
         
-        print("🔍 Fetching products for path: \(categoryPath)")
         viewModel.fetchProducts(for: categoryPath)
         
         isShowingFilteredProducts = true
@@ -215,11 +209,9 @@ class DiscoverViewController: UIViewController {
 
 extension DiscoverViewController: DiscoverSearchViewDelegate {
     func searchViewDidTapBack() {
-        isShowingFilteredProducts = false
         currentCategoryId = nil
         searchView.setBackButtonVisible(false)
-        viewModel.resetFilter()
-        viewModel.fetchAllProducts()
+        viewModel.resetView()
         collectionView.reloadData()
     }
     
@@ -234,17 +226,8 @@ extension DiscoverViewController: DiscoverSearchViewDelegate {
     }
     
     func searchView(_ searchView: DiscoverSearchView, didUpdateSearchText text: String) {
-        if text.isEmpty {
-            isShowingFilteredProducts = false
-            currentCategoryId = nil
-            searchView.setBackButtonVisible(false)
-            viewModel.resetFilter()
-            viewModel.fetchAllProducts()
-        } else {
-            viewModel.search(query: text)
-            isShowingFilteredProducts = true
-            searchView.setBackButtonVisible(true)
-        }
+        viewModel.search(query: text)
+        searchView.setBackButtonVisible(!text.isEmpty)
         collectionView.reloadData()
     }
 }
@@ -253,7 +236,6 @@ extension DiscoverViewController: FilterViewControllerDelegate {
     func filterViewController(_ controller: FilterViewController, didApplyFilter filter: FilterOptions) {
         currentCategoryId = nil
         viewModel.applyFilter(filter)
-        isShowingFilteredProducts = true
         searchView.setBackButtonVisible(true)
         collectionView.reloadData()
     }
@@ -261,7 +243,6 @@ extension DiscoverViewController: FilterViewControllerDelegate {
     func filterViewControllerDidReset(_ controller: FilterViewController) {
         currentCategoryId = nil
         viewModel.resetFilter()
-        isShowingFilteredProducts = false
         searchView.setBackButtonVisible(false)
         collectionView.reloadData()
     }
@@ -269,17 +250,15 @@ extension DiscoverViewController: FilterViewControllerDelegate {
 
 extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func numberOfSections(in collectionView: UICollectionView) -> Int {
-        let sections = isShowingFilteredProducts ? 1 : viewModel.categories.count
-        let isEmpty = isShowingFilteredProducts && viewModel.filteredProducts.isEmpty
+        let sections = viewModel.isShowingFilteredProducts ? 1 : viewModel.categories.count
+        let isEmpty = viewModel.isShowingFilteredProducts && viewModel.filteredProducts.isEmpty
         emptyStateView.isHidden = !isEmpty
-        
         collectionView.isHidden = isEmpty
-        
         return sections
     }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        if isShowingFilteredProducts {
+        if viewModel.isShowingFilteredProducts {
             return viewModel.filteredProducts.count
         }
         
@@ -291,7 +270,7 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if isShowingFilteredProducts {
+        if viewModel.isShowingFilteredProducts {
             guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ProductCell", for: indexPath) as? ProductCell else {
                 return UICollectionViewCell()
             }
@@ -315,7 +294,7 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        if isShowingFilteredProducts {
+        if viewModel.isShowingFilteredProducts {
             let padding: CGFloat = 32
             let spacing: CGFloat = 8
             let availableWidth = collectionView.bounds.width - padding
@@ -331,22 +310,22 @@ extension DiscoverViewController: UICollectionViewDelegate, UICollectionViewData
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
-        return isShowingFilteredProducts ? 8 : 0
+        return viewModel.isShowingFilteredProducts ? 8 : 0
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, minimumLineSpacingForSectionAt section: Int) -> CGFloat {
-        return isShowingFilteredProducts ? 16 : 1
+        return viewModel.isShowingFilteredProducts ? 16 : 1
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, insetForSectionAt section: Int) -> UIEdgeInsets {
-        if isShowingFilteredProducts {
+        if viewModel.isShowingFilteredProducts {
             return UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
         }
         return .zero
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if isShowingFilteredProducts {
+        if viewModel.isShowingFilteredProducts {
             let product = viewModel.filteredProducts[indexPath.item]
             let viewModel = ProductDetailsViewModel(product: product)
             let productDetailsVC = ProductDetailsViewController(viewModel: viewModel)

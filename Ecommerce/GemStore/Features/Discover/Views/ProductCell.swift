@@ -115,7 +115,7 @@ class ProductCell: UICollectionViewCell {
         titleLabel.text = product.name
         priceLabel.text = "$\(Int(product.price))"
         
-        ImageCacheService.shared.loadImage(from: product.defaultImageUrl) { [weak self] image in
+        UnifiedCacheService.shared.loadImage(from: product.defaultImageUrl) { [weak self] image in
             DispatchQueue.main.async {
                 self?.imageView.image = image
             }

@@ -12,6 +12,8 @@ import Combine
 
 class AuthViewModel: ObservableObject {
     
+    weak var coordinator: AuthCoordinator?
+    
     @Published var email: String = ""
     @Published var password: String = ""
     @Published var isLoading: Bool = false
@@ -56,6 +58,57 @@ class AuthViewModel: ObservableObject {
         isPasswordValid = password.count >= 6
     }
     
+    func showSignUp() {
+        coordinator?.showSignUpView()
+    }
+    
+    func showForgotPassword() {
+        coordinator?.showForgotPasswordView()
+    }
+    
+    func finishAuth() {
+        coordinator?.didFinishAuth()
+    }
+    
+    func login() {
+        isLoading = true
+        authService.signIn(email: email, password: password) { [weak self] result in
+            self?.isLoading = false
+            switch result {
+            case .success:
+                self?.finishAuth()
+            case .failure(let error):
+                self?.error = error
+            }
+        }
+    }
+    
+    func signUp() {
+        isLoading = true
+        authService.signUp(email: email, password: password, name: "", completion: { [weak self] result in
+            self?.isLoading = false
+            switch result {
+            case .success:
+                self?.finishAuth()
+            case .failure(let error):
+                self?.error = error
+            }
+        })
+    }
+    
+    func resetPassword() {
+        isLoading = true
+        authService.resetPassword(email: email) { [weak self] result in
+            self?.isLoading = false
+            switch result {
+            case .success:
+                self?.coordinator?.dismiss()
+            case .failure(let error):
+                self?.error = error
+            }
+        }
+    }
+    
     func signInWithGoogle(presenting viewController: UIViewController, completion: @escaping (Result<Void, Error>) -> Void) {
         isLoading = true
         authService.signInWithGoogle(presenting: viewController) { [weak self] result in
@@ -75,5 +128,9 @@ class AuthViewModel: ObservableObject {
             self?.isLoading = false
             completion(result)
         }
+    }
+    
+    deinit {
+        cancellables.removeAll()
     }
 } 

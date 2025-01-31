@@ -1,3 +1,10 @@
+//
+//  DiscoverEmptyStateView.swift
+//  Ecommerce
+//
+//  Created by Imac on 31.01.25.
+//
+
 import UIKit
 
 class DiscoverEmptyStateView: UIView {

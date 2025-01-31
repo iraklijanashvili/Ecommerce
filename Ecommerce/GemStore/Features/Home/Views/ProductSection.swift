@@ -148,6 +148,7 @@ private struct RegularProductCard: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
         )
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .padding(.bottom, 8)
     }
 }
 
@@ -261,5 +262,6 @@ private struct FeaturedProductCard: View {
                 .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
         )
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .padding(.bottom, 8)
     }
 } 

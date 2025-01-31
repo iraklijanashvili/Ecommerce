@@ -20,7 +20,10 @@ struct PaymentCardView: View {
             VStack(alignment: .leading, spacing: 20) {
                 HStack {
                     if let logoUrl = logoUrl {
-                        CachedAsyncImage(url: logoUrl, width: 60)
+                        UnifiedCachedImageView(urlString: logoUrl)
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60, height: 40)
+                            .clipped()
                     }
                     
                     if isSelected {

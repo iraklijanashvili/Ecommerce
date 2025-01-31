@@ -16,12 +16,21 @@ class SignUpViewModel: AuthViewModel {
     @Published var isNameValid: Bool = true
     @Published var isConfirmPasswordValid: Bool = true
     @Published var shouldNavigateToLogin = false
+    @Published var isSignUpButtonEnabled = true
+    @Published var signUpButtonAlpha: Double = 1.0
+    @Published var textFieldColors: [String: UIColor] = [
+        "name": .black,
+        "email": .black,
+        "password": .black,
+        "confirmPassword": .black
+    ]
     
     private var additionalCancellables = Set<AnyCancellable>()
     
     override init(authService: AuthServiceProtocol = AuthService()) {
         super.init(authService: authService)
         setupAdditionalValidation()
+        setupUIStateManagement()
     }
     
     private func setupAdditionalValidation() {
@@ -40,6 +49,35 @@ class SignUpViewModel: AuthViewModel {
                 self?.validateConfirmPassword(confirmPassword, password: password)
             }
             .store(in: &additionalCancellables)
+    }
+    
+    private func setupUIStateManagement() {
+        $isLoading
+            .sink { [weak self] isLoading in
+                self?.isSignUpButtonEnabled = !isLoading
+                self?.signUpButtonAlpha = isLoading ? 0.5 : 1.0
+            }
+            .store(in: &additionalCancellables)
+            
+        Publishers.CombineLatest4($isNameValid, $isEmailValid, $isPasswordValid, $isConfirmPasswordValid)
+            .sink { [weak self] nameValid, emailValid, passwordValid, confirmValid in
+                self?.updateTextFieldColors(
+                    nameValid: nameValid,
+                    emailValid: emailValid,
+                    passwordValid: passwordValid,
+                    confirmValid: confirmValid
+                )
+            }
+            .store(in: &additionalCancellables)
+    }
+    
+    private func updateTextFieldColors(nameValid: Bool, emailValid: Bool, passwordValid: Bool, confirmValid: Bool) {
+        textFieldColors = [
+            "name": nameValid ? .black : .red,
+            "email": emailValid ? .black : .red,
+            "password": passwordValid ? .black : .red,
+            "confirmPassword": confirmValid ? .black : .red
+        ]
     }
     
     private func validateName(_ name: String) {
@@ -89,5 +127,9 @@ class SignUpViewModel: AuthViewModel {
             self?.isLoading = false
             completion(result)
         }
+    }
+    
+    func navigateToLogin() {
+        shouldNavigateToLogin = true
     }
 } 

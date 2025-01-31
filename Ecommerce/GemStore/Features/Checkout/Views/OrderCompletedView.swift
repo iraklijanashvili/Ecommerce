@@ -50,7 +50,6 @@ struct OrderCompletedView: View {
         
         docRef.getDocument { document, error in
             if let error = error {
-                print("Error getting document: \(error)")
                 return
             }
             

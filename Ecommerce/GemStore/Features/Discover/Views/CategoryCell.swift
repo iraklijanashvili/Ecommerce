@@ -71,7 +71,7 @@ class CategoryCell: UICollectionViewCell {
         titleLabel.text = category.name.uppercased()
         
         if let url = URL(string: category.imageUrl) {
-            ImageCacheService.shared.loadImage(from: category.imageUrl) { [weak self] image in
+            UnifiedCacheService.shared.loadImage(from: category.imageUrl) { [weak self] image in
                 DispatchQueue.main.async {
                     self?.imageView.image = image
                 }

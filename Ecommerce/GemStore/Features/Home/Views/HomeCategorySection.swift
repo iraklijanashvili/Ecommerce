@@ -8,10 +8,8 @@
 import SwiftUI
 
 struct HomeCategorySection: View {
-    let categories: [Category]
+    @StateObject private var viewModel: HomeCategorySectionViewModel
     @Binding var selectedTab: Int
-    @StateObject private var categoryManager = CategorySelectionManager.shared
-    @StateObject private var viewModel = HomeCategoryViewModel()
     
     private let columns = [
         GridItem(.flexible()),
@@ -20,22 +18,54 @@ struct HomeCategorySection: View {
         GridItem(.flexible())
     ]
     
+    init(categories: [Category], selectedTab: Binding<Int>) {
+        let iconRepository = FirestoreCategoryIconRepository()
+        let selectionHandler = CategorySelectionManager.shared
+        _selectedTab = selectedTab
+        _viewModel = StateObject(wrappedValue: HomeCategorySectionViewModel(
+            categories: categories,
+            iconRepository: iconRepository,
+            selectionHandler: selectionHandler
+        ))
+    }
+    
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(categories) { category in
-                CategoryCard(category: category, iconUrl: viewModel.categoryIcons[category.id])
-                    .onTapGesture {
-                        categoryManager.selectCategory(category)
-                        selectedTab = 1
+        VStack {
+            if viewModel.isLoading && viewModel.categoryIcons.isEmpty {
+                ProgressView()
+            } else if let error = viewModel.error {
+                ErrorView(error: error) {
+                    Task {
+                        await viewModel.loadCategoryIcons()
                     }
+                }
+            } else {
+                categoriesGrid
+            }
+        }
+        .onAppear {
+            if viewModel.categoryIcons.isEmpty {
+                Task {
+                    await viewModel.loadCategoryIcons()
+                }
+            }
+        }
+    }
+    
+    private var categoriesGrid: some View {
+        LazyVGrid(columns: columns, spacing: 16) {
+            ForEach(viewModel.categories) { category in
+                CategoryCard(
+                    category: category,
+                    iconUrl: viewModel.getIconUrl(for: category.id)
+                )
+                .onTapGesture {
+                    viewModel.handleCategorySelection(category)
+                    selectedTab = 1
+                }
             }
         }
         .padding(.horizontal)
-        .onAppear {
-            Task {
-                await viewModel.fetchCategoryIcons()
-            }
-        }
     }
 }
 
@@ -45,32 +75,7 @@ private struct CategoryCard: View {
     
     var body: some View {
         VStack(spacing: 4) {
-            AsyncImage(url: URL(string: iconUrl ?? category.imageUrl)) { phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                        .frame(width: 45, height: 45)
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .scaleEffect(0.7)
-                case .failure:
-                    Color.gray
-                        .overlay(
-                            Image(systemName: "photo")
-                                .foregroundColor(.white)
-                        )
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .frame(width: 45, height: 45)
-            .clipShape(Circle())
-            .overlay(
-                Circle()
-                    .stroke(Color.black.opacity(0.2), lineWidth: 0.5)
-            )
+            categoryIcon
             
             Text(category.name)
                 .font(.caption2)
@@ -79,6 +84,64 @@ private struct CategoryCard: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
+    }
+    
+    private var categoryIcon: some View {
+        Group {
+            if let iconUrl = iconUrl {
+                UnifiedCachedImageView(urlString: iconUrl)
+                    .frame(width: 45, height: 45)
+                    .scaleEffect(0.7)
+            } else {
+                fallbackImage
+            }
+        }
+        .clipShape(Circle())
+        .overlay(
+            Circle()
+                .stroke(Color.black.opacity(0.2), lineWidth: 0.5)
+        )
+    }
+    
+    private var fallbackImage: some View {
+        Group {
+            if let url = URL(string: category.imageUrl) {
+                UnifiedCachedImageView(urlString: category.imageUrl)
+                    .frame(width: 45, height: 45)
+                    .scaleEffect(0.7)
+            } else {
+                Color.gray
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(.white)
+                    )
+                    .frame(width: 45, height: 45)
+                    .scaleEffect(0.7)
+            }
+        }
+    }
+}
+
+private struct ErrorView: View {
+    let error: Error
+    let retryAction: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("Error loading categories")
+                .font(.headline)
+            
+            Text(error.localizedDescription)
+                .font(.subheadline)
+                .foregroundColor(.gray)
+                .multilineTextAlignment(.center)
+            
+            Button("Retry") {
+                retryAction()
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding()
     }
 }
 

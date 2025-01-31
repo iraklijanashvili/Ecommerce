@@ -19,6 +19,7 @@ protocol DiscoverViewModelProtocol: AnyObject {
     var filteredProducts: [Product] { get }
     var currentFilter: FilterOptions { get }
     var searchQuery: String { get }
+    var isShowingFilteredProducts: Bool { get }
     var onCategoriesUpdated: (() -> Void)? { get set }
     var onProductsUpdated: (() -> Void)? { get set }
     var onError: ((Error) -> Void)? { get set }
@@ -29,6 +30,7 @@ protocol DiscoverViewModelProtocol: AnyObject {
     func applyFilter(_ filter: FilterOptions)
     func resetFilter()
     func search(query: String)
+    func resetView()
 }
 
 class FirebaseCategoryRepository: CategoryRepository {
@@ -60,6 +62,7 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     @Published private(set) var filteredProducts: [Product] = []
     @Published private(set) var currentFilter = FilterOptions()
     @Published private(set) var searchQuery: String = ""
+    @Published private(set) var isShowingFilteredProducts: Bool = false
     
     var onCategoriesUpdated: (() -> Void)?
     var onProductsUpdated: (() -> Void)?
@@ -74,14 +77,11 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func fetchCategories() {
         Task {
             do {
-                print("\n📂 Fetching categories...")
                 categories = try await repository.fetchCategories()
-                print("✅ Fetched \(categories.count) categories")
                 await MainActor.run {
                     onCategoriesUpdated?()
                 }
             } catch {
-                print("❌ Error fetching categories: \(error)")
                 await MainActor.run {
                     onError?(error)
                 }
@@ -92,16 +92,13 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func fetchAllProducts() {
         Task {
             do {
-                print("\n📦 Fetching all products...")
                 let allProducts = try await repository.fetchAllProducts()
-                print("✅ Fetched \(allProducts.count) products")
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.products = allProducts
                     self.applyCurrentFilter()
                 }
             } catch {
-                print("❌ Error fetching all products: \(error)")
                 await MainActor.run { [weak self] in
                     self?.onError?(error)
                 }
@@ -112,17 +109,13 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func fetchProducts(for categoryId: String) {
         Task {
             do {
-                print("\n🔍 Fetching products for category: \(categoryId)")
                 let fetchedProducts = try await repository.fetchProducts(for: categoryId)
-                print("✅ Fetched \(fetchedProducts.count) products")
-                
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.products = fetchedProducts
                     self.applyCurrentFilter()
                 }
             } catch {
-                print("❌ Error fetching products: \(error)")
                 await MainActor.run { [weak self] in
                     self?.onError?(error)
                 }
@@ -131,39 +124,32 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     }
     
     func search(query: String) {
-        print("\n🔍 Searching with query: \(query)")
         searchQuery = query
+        isShowingFilteredProducts = !query.isEmpty
         applyCurrentFilter()
     }
     
     func applyFilter(_ filter: FilterOptions) {
-        print("\n🔧 Applying filter:")
-        print("- Categories: \(filter.selectedCategories.map { $0.rawValue })")
-        print("- Colors: \(filter.selectedColors.map { $0.rawValue })")
-        print("- Price Range: \(filter.priceRange.min) - \(filter.priceRange.max)")
-        print("- Sort By: \(filter.sortBy)")
-        
         currentFilter = filter
+        isShowingFilteredProducts = true
         applyCurrentFilter()
     }
     
     func resetFilter() {
-        print("\n🔄 Resetting filter")
         currentFilter = FilterOptions()
         searchQuery = ""
+        isShowingFilteredProducts = false
         filteredProducts = products
         onProductsUpdated?()
     }
     
+    func resetView() {
+        isShowingFilteredProducts = false
+        resetFilter()
+    }
+    
     private func applyCurrentFilter() {
-        print("\n🔍 Applying current filter to \(products.count) products")
-        print("- Search Query: \(searchQuery)")
-        print("- Categories: \(currentFilter.selectedCategories.map { $0.rawValue })")
-        print("- Colors: \(currentFilter.selectedColors.map { $0.rawValue })")
-        
         filteredProducts = filterService.filterProducts(products, with: currentFilter, searchQuery: searchQuery)
-        print("✅ Filter applied - Found \(filteredProducts.count) matching products")
-        
         onProductsUpdated?()
     }
 } 

@@ -337,7 +337,7 @@ class ProductDetailsViewController: UIViewController {
         priceLabel.text = product.formattedPrice
         descriptionLabel.text = product.description
         
-        ImageCacheService.shared.loadImage(from: viewModel.currentImageUrl) { [weak self] image in
+        UnifiedCacheService.shared.loadImage(from: viewModel.currentImageUrl) { [weak self] image in
             DispatchQueue.main.async {
                 self?.imageView.image = image
             }

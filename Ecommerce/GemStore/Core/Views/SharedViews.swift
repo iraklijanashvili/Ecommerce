@@ -64,7 +64,7 @@ struct SharedProductCard: View {
     }
     
     private func loadImage() {
-        ImageCacheService.shared.loadImage(from: product.defaultImageUrl) { loadedImage in
+        UnifiedCacheService.shared.loadImage(from: product.defaultImageUrl) { loadedImage in
             self.image = loadedImage
         }
     }
@@ -122,28 +122,6 @@ struct ProductDetailsViewControllerWrapper: UIViewControllerRepresentable {
     }
     
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-    }
-}
-
-struct CachedAsyncImage: View {
-    let url: String
-    let width: CGFloat
-    @State private var image: UIImage?
-    
-    var body: some View {
-        Group {
-            if let image = image {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } else {
-                ProgressView()
-            }
-        }
-        .frame(width: width)
-        .task {
-            image = await ImageCacheService.shared.loadImage(from: url)
-        }
     }
 }
 

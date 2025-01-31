@@ -290,11 +290,27 @@ class SignUpViewController: UIViewController {
             .assign(to: \.confirmPassword, on: viewModel)
             .store(in: &cancellables)
         
-        viewModel.$isLoading
+        viewModel.$isSignUpButtonEnabled
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isLoading in
-                self?.signUpButton.isEnabled = !isLoading
-                self?.signUpButton.alpha = isLoading ? 0.5 : 1
+            .sink { [weak self] isEnabled in
+                self?.signUpButton.isEnabled = isEnabled
+            }
+            .store(in: &cancellables)
+            
+        viewModel.$signUpButtonAlpha
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] alpha in
+                self?.signUpButton.alpha = alpha
+            }
+            .store(in: &cancellables)
+        
+        viewModel.$textFieldColors
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] colors in
+                self?.nameTextField.textColor = colors["name"]
+                self?.emailTextField.textColor = colors["email"]
+                self?.passwordTextField.textColor = colors["password"]
+                self?.confirmPasswordTextField.textColor = colors["confirmPassword"]
             }
             .store(in: &cancellables)
         
@@ -305,32 +321,15 @@ class SignUpViewController: UIViewController {
                 self?.showError(error)
             }
             .store(in: &cancellables)
-        
-        viewModel.$isNameValid
+            
+        viewModel.$shouldNavigateToLogin
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] isValid in
-                self?.nameTextField.textColor = isValid ? .black : .red
-            }
-            .store(in: &cancellables)
-        
-        viewModel.$isEmailValid
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isValid in
-                self?.emailTextField.textColor = isValid ? .black : .red
-            }
-            .store(in: &cancellables)
-        
-        viewModel.$isPasswordValid
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isValid in
-                self?.passwordTextField.textColor = isValid ? .black : .red
-            }
-            .store(in: &cancellables)
-        
-        viewModel.$isConfirmPasswordValid
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] isValid in
-                self?.confirmPasswordTextField.textColor = isValid ? .black : .red
+            .sink { [weak self] shouldNavigate in
+                if shouldNavigate {
+                    let loginVC = LoginViewController()
+                    loginVC.modalPresentationStyle = .fullScreen
+                    self?.present(loginVC, animated: true)
+                }
             }
             .store(in: &cancellables)
     }
@@ -366,9 +365,7 @@ class SignUpViewController: UIViewController {
     }
     
     @objc private func loginLabelTapped() {
-        let loginVC = LoginViewController()
-        loginVC.modalPresentationStyle = .fullScreen
-        present(loginVC, animated: true)
+        viewModel.navigateToLogin()
     }
     
     private func setupGoogleButton() {

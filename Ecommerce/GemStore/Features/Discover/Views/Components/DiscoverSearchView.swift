@@ -1,3 +1,10 @@
+//
+//  DiscoverSearchView.swift
+//  Ecommerce
+//
+//  Created by Imac on 13.01.25.
+//
+
 import UIKit
 
 protocol DiscoverSearchViewDelegate: AnyObject {

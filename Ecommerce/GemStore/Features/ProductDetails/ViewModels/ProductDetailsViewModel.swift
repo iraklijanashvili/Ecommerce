@@ -123,7 +123,14 @@ class ProductDetailsViewModel: ProductDetailsViewModelProtocol, ObservableObject
                 return false
             }
             .receive(on: DispatchQueue.main)
-            .assign(to: &$isAddToCartEnabled)
+            .sink { [weak self] isEnabled in
+                self?.isAddToCartEnabled = isEnabled
+            }
+            .store(in: &cancellables)
+    }
+    
+    deinit {
+        cancellables.removeAll()
     }
     
     func checkFavoriteStatus() async {

@@ -29,10 +29,12 @@ protocol CartServiceProtocol {
 class CartServiceImpl: CartServiceProtocol {
     static let shared = CartServiceImpl()
     
-    private let db = Firestore.firestore()
     @Published private(set) var items: [CartItem] = []
     @Published private(set) var totalPrice: Double = 0
     @Published private(set) var totalQuantity: Int = 0
+    
+    private let repository: CartRepository
+    private var cancellables = Set<AnyCancellable>()
     
     var itemsPublisher: AnyPublisher<[CartItem], Never> {
         $items.eraseToAnyPublisher()
@@ -46,101 +48,71 @@ class CartServiceImpl: CartServiceProtocol {
         $totalQuantity.eraseToAnyPublisher()
     }
     
-    private init() {
-        startObservingCart()
-        
-        $items
-            .map { items in
-                items.reduce(0) { $0 + $1.totalPrice }
-            }
-            .assign(to: &$totalPrice)
-            
-        $items
-            .map { items in
-                items.reduce(0) { $0 + $1.quantity }
-            }
-            .assign(to: &$totalQuantity)
+    init(repository: CartRepository = CartRepositoryImpl()) {
+        self.repository = repository
+        setupBindings()
     }
     
-    private func startObservingCart() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        db.collection("userCarts")
-            .document(userId)
-            .collection("items")
-            .addSnapshotListener { [weak self] snapshot, error in
-                guard let self = self,
-                      let snapshot = snapshot else { return }
-                
-                self.items = snapshot.documents.compactMap { document in
-                    try? document.data(as: CartItem.self)
-                }
+    private func setupBindings() {
+        repository.observeCartItems()
+            .sink { [weak self] items in
+                self?.items = items
+                self?.updateDerivedValues(from: items)
             }
+            .store(in: &cancellables)
+    }
+    
+    private func updateDerivedValues(from items: [CartItem]) {
+        totalPrice = items.reduce(0) { $0 + $1.totalPrice }
+        totalQuantity = items.reduce(0) { $0 + $1.quantity }
     }
     
     func addToCart(product: Product, quantity: Int, size: String, color: ProductColor) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let itemId = "\(product.id)_\(size)_\(color.rawValue)"
-        let cartItem = CartItem(
-            id: itemId,
-            product: product,
-            quantity: quantity,
-            selectedSize: size,
-            selectedColor: color
-        )
-        
-        do {
-            try db.collection("userCarts")
-                .document(userId)
-                .collection("items")
-                .document(itemId)
-                .setData(from: cartItem)
-        } catch {
-            print("Error adding to cart: \(error)")
+        Task {
+            let itemId = "\(product.id)_\(size)_\(color.rawValue)"
+            let cartItem = CartItem(
+                id: itemId,
+                product: product,
+                quantity: quantity,
+                selectedSize: size,
+                selectedColor: color
+            )
+            
+            do {
+                try await repository.addItem(cartItem)
+            } catch {
+                print("Error adding to cart: \(error)")
+            }
         }
     }
     
     func removeFromCart(itemId: String) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        db.collection("userCarts")
-            .document(userId)
-            .collection("items")
-            .document(itemId)
-            .delete()
+        Task {
+            do {
+                try await repository.removeItem(withId: itemId)
+            } catch {
+                print("Error removing from cart: \(error)")
+            }
+        }
     }
     
     func updateQuantity(itemId: String, quantity: Int) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        if quantity <= 0 {
-            removeFromCart(itemId: itemId)
-            return
+        Task {
+            do {
+                try await repository.updateItemQuantity(id: itemId, quantity: quantity)
+            } catch {
+                print("Error updating quantity: \(error)")
+            }
         }
-        
-        db.collection("userCarts")
-            .document(userId)
-            .collection("items")
-            .document(itemId)
-            .updateData(["quantity": quantity])
     }
     
     func clearCart() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-        
-        let batch = db.batch()
-        db.collection("userCarts")
-            .document(userId)
-            .collection("items")
-            .getDocuments { snapshot, error in
-                guard let snapshot = snapshot else { return }
-                
-                snapshot.documents.forEach { document in
-                    batch.deleteDocument(document.reference)
-                }
-                
-                batch.commit()
+        Task {
+            do {
+                try await repository.clearCart()
+            } catch {
+                print("Error clearing cart: \(error)")
             }
+        }
     }
 } 

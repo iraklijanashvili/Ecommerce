@@ -21,6 +21,7 @@ struct CheckoutView: View {
                     
                     NavigationLink(destination: CheckoutPaymentView(
                         productPrice: viewModel.cartService.totalPrice,
+                        shippingPrice: viewModel.selectedShippingMethod?.price ?? 0,
                         productName: viewModel.cartService.items.first?.product.name ?? "Unknown Product"
                     )) {
                         Text("Continue to payment")

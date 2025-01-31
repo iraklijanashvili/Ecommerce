@@ -53,7 +53,6 @@ class WishlistViewModel: WishlistViewModelProtocol, ObservableObject {
         do {
             try await favoritesService.removeFavorite(productId: productId)
         } catch {
-            print("Error removing from wishlist: \(error)")
         }
     }
 } 

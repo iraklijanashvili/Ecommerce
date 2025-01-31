@@ -5,7 +5,6 @@
 //  Created by Imac on 13.01.25.
 //
 
-
 import SwiftUI
 
 struct ProductCard: View {
@@ -13,26 +12,9 @@ struct ProductCard: View {
     
     var body: some View {
         VStack(alignment: .leading) {
-            AsyncImage(url: URL(string: product.defaultImageUrl)) { phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    Color.gray
-                        .overlay(
-                            Image(systemName: "photo")
-                                .foregroundColor(.white)
-                        )
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            .frame(height: 150)
-            .clipped()
+            UnifiedCachedImageView(urlString: product.defaultImageUrl)
+                .frame(height: 150)
+                .clipped()
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)

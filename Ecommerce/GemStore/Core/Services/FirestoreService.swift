@@ -32,7 +32,29 @@ class FirestoreServiceImpl: FirestoreService {
     }
     
     func fetchProducts() async throws -> [Product] {
-        return try await repository.getProducts()
+        let batchSize = 20
+        var allProducts: [Product] = []
+        var lastDocument: DocumentSnapshot?
+        
+        repeat {
+            var query = db.collection("products").limit(to: batchSize)
+            if let lastDoc = lastDocument {
+                query = query.start(afterDocument: lastDoc)
+            }
+            
+            let snapshot = try await query.getDocuments()
+            let products = try snapshot.documents.map { document in
+                var product = try Firestore.Decoder().decode(Product.self, from: document.data())
+                product.id = document.documentID
+                return product
+            }
+            
+            allProducts.append(contentsOf: products)
+            lastDocument = snapshot.documents.last
+            
+        } while lastDocument != nil
+        
+        return allProducts
     }
     
     func fetchCategories() async throws -> [Category] {

@@ -5,26 +5,7 @@
 //  Created by Imac on 13.01.25.
 //
 
-
 import SwiftUI
-
-class CategorySelectionManager: ObservableObject {
-    @Published private(set) var selectedCategory: Category?
-    static let shared = CategorySelectionManager()
-    private init() {}
-    
-    func selectCategory(_ category: Category) {
-        DispatchQueue.main.async {
-            self.selectedCategory = category
-        }
-    }
-    
-    func clearSelection() {
-        DispatchQueue.main.async {
-            self.selectedCategory = nil
-        }
-    }
-}
 
 struct MainTabView: View {
     @State private var selectedTab = 0
