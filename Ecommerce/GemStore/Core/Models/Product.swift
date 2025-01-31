@@ -41,9 +41,9 @@ struct Product: Identifiable, Codable, Hashable {
     
     var formattedPrice: String {
         let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "$"
-        return formatter.string(from: NSNumber(value: price)) ?? "$\(price)"
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        return "$\(formatter.string(from: NSNumber(value: price)) ?? String(format: "%.0f", price))"
     }
     
     var defaultImageUrl: String {

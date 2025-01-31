@@ -76,37 +76,12 @@ struct SharedProductDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     
     var body: some View {
-        if isFromHomePage {
-            NavigationView {
-                let viewModel = ProductDetailsViewModel(product: product)
-                ProductDetailsViewControllerWrapper(viewModel: viewModel, 
-                                                 presentationMode: presentationMode,
-                                                 isFromHomePage: isFromHomePage)
-                    .navigationBarBackButtonHidden(true)
-                    .navigationBarItems(leading: Button(action: {
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.black)
-                            .imageScale(.large)
-                    })
-                    .navigationBarTitle("Product Details", displayMode: .inline)
-            }
-        } else {
-            let viewModel = ProductDetailsViewModel(product: product)
-            ProductDetailsViewControllerWrapper(viewModel: viewModel, 
-                                             presentationMode: presentationMode,
-                                             isFromHomePage: isFromHomePage)
-                .navigationBarBackButtonHidden(true)
-                .navigationBarItems(leading: Button(action: {
-                    presentationMode.wrappedValue.dismiss()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.black)
-                        .imageScale(.large)
-                })
-                .navigationBarTitle("Product Details", displayMode: .inline)
-        }
+        let viewModel = ProductDetailsViewModel(product: product)
+        ProductDetailsViewControllerWrapper(viewModel: viewModel, 
+                                         presentationMode: presentationMode,
+                                         isFromHomePage: isFromHomePage)
+            .navigationBarTitle("Product Details", displayMode: .inline)
+            .navigationBarBackButtonHidden(false)
     }
 }
 
@@ -117,11 +92,32 @@ struct ProductDetailsViewControllerWrapper: UIViewControllerRepresentable {
     
     func makeUIViewController(context: Context) -> UIViewController {
         let viewController = ProductDetailsViewController(viewModel: viewModel)
-        viewController.hideDefaultNavigationItems = true
+        viewController.hideDefaultNavigationItems = false
+        viewController.navigationItem.leftBarButtonItem = UIBarButtonItem(
+            image: UIImage(systemName: "chevron.left"),
+            style: .plain,
+            target: context.coordinator,
+            action: #selector(Coordinator.dismiss)
+        )
         return viewController
     }
     
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
     }
+    
+    class Coordinator: NSObject {
+        let parent: ProductDetailsViewControllerWrapper
+        
+        init(_ parent: ProductDetailsViewControllerWrapper) {
+            self.parent = parent
+        }
+        
+        @objc func dismiss() {
+            parent.presentationMode.wrappedValue.dismiss()
+        }
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
 

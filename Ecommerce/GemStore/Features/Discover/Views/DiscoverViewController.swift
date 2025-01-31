@@ -153,8 +153,6 @@ class DiscoverViewController: UIViewController {
     }
     
     func selectSubcategory(for category: Category, subcategory: Category.Subcategory) {
-
-        
         if category.id.lowercased() == "collection" {
             if subcategory.name.lowercased() == "all" {
                 let collectionVC = UIHostingController(
@@ -181,14 +179,9 @@ class DiscoverViewController: UIViewController {
                 collectionType = subcategory.id.lowercased()
             }
             
-            let collectionVC = UIHostingController(
-                rootView: CollectionProductsView(
-                    collectionType: collectionType,
-                    title: subcategory.name,
-                    isFromHomePage: false
-                )
-            )
-            navigationController?.pushViewController(collectionVC, animated: true)
+            viewModel.fetchProducts(for: collectionType)
+            searchView.setBackButtonVisible(true)
+            isShowingFilteredProducts = true
             return
         }
         
@@ -196,14 +189,12 @@ class DiscoverViewController: UIViewController {
         if subcategory.name.lowercased() == "all" {
             categoryPath = "\(category.id.lowercased())/all"
         } else {
-            categoryPath = subcategory.id.lowercased()
+            categoryPath = "\(category.id.lowercased())/\(subcategory.id.lowercased())"
         }
         
         viewModel.fetchProducts(for: categoryPath)
-        
-        isShowingFilteredProducts = true
         searchView.setBackButtonVisible(true)
-        collectionView.reloadData()
+        isShowingFilteredProducts = true
     }
 }
 

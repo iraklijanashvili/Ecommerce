@@ -1,4 +1,3 @@
-
 //
 //  PaymentViewModel.swift
 //  Ecommerce
@@ -14,6 +13,7 @@ class PaymentViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var showAddCard = false
+    private var isLoadingCards = false
     
     private let paymentService: PaymentServiceProtocol
     
@@ -26,25 +26,34 @@ class PaymentViewModel: ObservableObject {
     
     @MainActor
     func loadCards() async {
+        guard !isLoadingCards else { return }
+        isLoadingCards = true
         isLoading = true
+        
         do {
             cards = try await paymentService.fetchCards()
-            isLoading = false
         } catch {
             errorMessage = error.localizedDescription
-            isLoading = false
         }
+        
+        isLoading = false
+        isLoadingCards = false
     }
     
     @MainActor
-    func addCard(_ card: PaymentCard) async {
+    func addCard(_ card: PaymentCard) async throws {
+        guard !isLoading else { return }
+        
         isLoading = true
+        errorMessage = nil
+        
         do {
             try await paymentService.addCard(card)
             await loadCards()
         } catch {
             errorMessage = error.localizedDescription
             isLoading = false
+            throw error
         }
     }
     

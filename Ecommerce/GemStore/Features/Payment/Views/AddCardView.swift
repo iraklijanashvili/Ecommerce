@@ -22,12 +22,16 @@ struct AddCardView: View {
                 Section {
                     TextField("Card Number", text: $viewModel.formattedCardNumber)
                         .keyboardType(.numberPad)
+                        .textContentType(.creditCardNumber)
+                        .disabled(viewModel.isAddingCard)
                         .onChange(of: viewModel.formattedCardNumber) { newValue in
                             viewModel.formatCardNumber(newValue)
                         }
                     
                     TextField("Cardholder Name", text: $viewModel.cardholderName)
+                        .textContentType(.name)
                         .textInputAutocapitalization(.words)
+                        .disabled(viewModel.isAddingCard)
                         .onChange(of: viewModel.cardholderName) { newValue in
                             if newValue.count > 50 {
                                 viewModel.cardholderName = String(newValue.prefix(50))
@@ -42,27 +46,39 @@ struct AddCardView: View {
                     
                     TextField("MM/YY", text: $viewModel.expiryDate)
                         .keyboardType(.numberPad)
+                        .disabled(viewModel.isAddingCard)
                         .onChange(of: viewModel.expiryDate) { newValue in
                             viewModel.formatExpiryDate(newValue)
                         }
                     
                     TextField("CVV", text: $viewModel.cvv)
                         .keyboardType(.numberPad)
+                        .textContentType(.creditCardNumber)
+                        .disabled(viewModel.isAddingCard)
                         .onChange(of: viewModel.cvv) { newValue in
                             viewModel.formatCVV(newValue)
                         }
                 }
                 
                 Section {
-                    Button("Add Card") {
-                        if viewModel.validateCard() {
-                            Task {
-                                await viewModel.addCard()
-                                dismiss()
+                    Button(action: {
+                        Task {
+                            await viewModel.addCard()
+                        }
+                    }) {
+                        if viewModel.isAddingCard {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                                Spacer()
                             }
+                        } else {
+                            Text("Add Card")
+                                .frame(maxWidth: .infinity)
                         }
                     }
-                    .disabled(!viewModel.isFormValid)
+                    .disabled(!viewModel.isFormValid || viewModel.isAddingCard)
                 }
             }
             .navigationTitle("Add New Card")
@@ -71,17 +87,25 @@ struct AddCardView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button(action: {
-                        dismiss()
+                        if !viewModel.isAddingCard {
+                            dismiss()
+                        }
                     }) {
                         Image(systemName: "chevron.left")
                             .foregroundColor(.black)
                     }
+                    .disabled(viewModel.isAddingCard)
                 }
             }
             .alert("Invalid Card", isPresented: $viewModel.showingError) {
                 Button("OK", role: .cancel) { }
             } message: {
                 Text(viewModel.errorMessage)
+            }
+            .onChange(of: viewModel.cardAddedSuccessfully) { success in
+                if success {
+                    dismiss()
+                }
             }
         }
     }

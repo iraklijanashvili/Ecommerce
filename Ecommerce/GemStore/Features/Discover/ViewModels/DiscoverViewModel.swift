@@ -113,7 +113,10 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.products = fetchedProducts
+                    self.filteredProducts = fetchedProducts
+                    self.isShowingFilteredProducts = true
                     self.applyCurrentFilter()
+                    self.onProductsUpdated?()
                 }
             } catch {
                 await MainActor.run { [weak self] in
@@ -126,13 +129,49 @@ class DiscoverViewModel: ObservableObject, DiscoverViewModelProtocol {
     func search(query: String) {
         searchQuery = query
         isShowingFilteredProducts = !query.isEmpty
-        applyCurrentFilter()
+        
+        if !query.isEmpty && products.isEmpty {
+            Task {
+                do {
+                    let allProducts = try await repository.fetchAllProducts()
+                    await MainActor.run { [weak self] in
+                        guard let self = self else { return }
+                        self.products = allProducts
+                        self.applyCurrentFilter()
+                    }
+                } catch {
+                    await MainActor.run { [weak self] in
+                        self?.onError?(error)
+                    }
+                }
+            }
+        } else {
+            applyCurrentFilter()
+        }
     }
     
     func applyFilter(_ filter: FilterOptions) {
         currentFilter = filter
         isShowingFilteredProducts = true
-        applyCurrentFilter()
+        
+        if products.isEmpty {
+            Task {
+                do {
+                    let allProducts = try await repository.fetchAllProducts()
+                    await MainActor.run { [weak self] in
+                        guard let self = self else { return }
+                        self.products = allProducts
+                        self.applyCurrentFilter()
+                    }
+                } catch {
+                    await MainActor.run { [weak self] in
+                        self?.onError?(error)
+                    }
+                }
+            }
+        } else {
+            applyCurrentFilter()
+        }
     }
     
     func resetFilter() {

@@ -18,14 +18,11 @@ class HomeViewModel: ObservableObject {
     
     private let firestoreService: FirestoreService
     private var cancellables = Set<AnyCancellable>()
+    private var hasLoadedData = false
     
     init(firestoreService: FirestoreService = FirestoreServiceImpl()) {
         self.firestoreService = firestoreService
         print("HomeViewModel initialized")
-        
-        Task { @MainActor in
-            await loadData()
-        }
     }
     
     deinit {
@@ -34,7 +31,11 @@ class HomeViewModel: ObservableObject {
     }
     
     @MainActor
-    func loadData() async {
+    func loadData(forceReload: Bool = false) async {
+        if !forceReload && hasLoadedData {
+            return
+        }
+        
         print("Starting to load data...")
         isLoading = true
         error = nil
@@ -57,13 +58,27 @@ class HomeViewModel: ObservableObject {
             self.products = fetchedProducts
             print("Products loaded: \(fetchedProducts.count)")
             
+            hasLoadedData = true
+            
         } catch {
             print("Error loading data: \(error)")
             self.error = error
+            hasLoadedData = false
         }
         
         isLoading = false
         print("Loading completed")
+    }
+    
+    @MainActor
+    func reloadBanners() async {
+        do {
+            let fetchedBanners = try await firestoreService.fetchBanners()
+            self.banners = fetchedBanners
+            print("Banners reloaded: \(fetchedBanners.count)")
+        } catch {
+            print("Error reloading banners: \(error)")
+        }
     }
     
     var newCollectionBanner: Banner? {

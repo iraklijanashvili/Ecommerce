@@ -15,9 +15,19 @@ import FirebaseAuth
 class CheckoutPaymentViewModel: ObservableObject {
     @Published var selectedPaymentMethod: PaymentMethod?
     @Published var selectedCard: PaymentCard?
-    @Published var cards: [PaymentCard] = []
+    @Published var cards: [PaymentCard] = [] {
+        didSet {
+            if !cards.isEmpty && selectedCard == nil {
+                selectedCard = cards.first
+            }
+            if let selected = selectedCard, !cards.contains(where: { $0.id == selected.id }) {
+                selectedCard = cards.first
+            }
+        }
+    }
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var isProcessingOrder = false
     
     let productPrice: Double
     let shippingPrice: Double
@@ -74,6 +84,8 @@ class CheckoutPaymentViewModel: ObservableObject {
     }
     
     var canPlaceOrder: Bool {
+        guard !isProcessingOrder else { return false }
+        
         switch selectedPaymentMethod {
         case .cash:
             return true
@@ -90,13 +102,15 @@ class CheckoutPaymentViewModel: ObservableObject {
             return false
         }
         
-        isLoading = true
-        defer { isLoading = false }
+        isProcessingOrder = true
         
         do {
+            let currentCards = cards
             let paymentSuccessful = try await processPayment()
+            
             guard paymentSuccessful else {
                 errorMessage = "Payment failed"
+                isProcessingOrder = false
                 return false
             }
             
@@ -113,12 +127,14 @@ class CheckoutPaymentViewModel: ObservableObject {
             )
             
             try await createOrder(order)
-            
             try await cartService.clearCart()
             
+            cards = currentCards
+            isProcessingOrder = false
             return true
         } catch {
             errorMessage = error.localizedDescription
+            isProcessingOrder = false
             return false
         }
     }

@@ -17,8 +17,11 @@ class AddCardViewModel: ObservableObject {
     @Published var cvv = ""
     @Published var showingError = false
     @Published var errorMessage = ""
+    @Published var isAddingCard = false
+    @Published var cardAddedSuccessfully = false
     
     private let parentViewModel: PaymentViewModel
+    private var isProcessing = false
     
     init(parentViewModel: PaymentViewModel) {
         self.parentViewModel = parentViewModel
@@ -38,6 +41,9 @@ class AddCardViewModel: ObservableObject {
     }
     
     func formatCardNumber(_ number: String) {
+        guard !isProcessing else { return }
+        isProcessing = true
+        
         let filtered = number.filter { $0.isNumber }
         cardNumber = filtered
         
@@ -50,14 +56,23 @@ class AddCardViewModel: ObservableObject {
                 formatted += String(char)
             }
             if formatted != formattedCardNumber {
-                formattedCardNumber = formatted
+                DispatchQueue.main.async {
+                    self.formattedCardNumber = formatted
+                }
             }
         } else {
-            formattedCardNumber = String(formattedCardNumber.prefix(19))
+            DispatchQueue.main.async {
+                self.formattedCardNumber = String(self.formattedCardNumber.prefix(19))
+            }
         }
+        
+        isProcessing = false
     }
     
     func formatExpiryDate(_ input: String) {
+        guard !isProcessing else { return }
+        isProcessing = true
+        
         let filtered = input.filter { $0.isNumber }
         if filtered.count <= 4 {
             var formatted = ""
@@ -66,16 +81,29 @@ class AddCardViewModel: ObservableObject {
                 formatted += String(char)
             }
             if formatted != expiryDate {
-                expiryDate = formatted
+                DispatchQueue.main.async {
+                    self.expiryDate = formatted
+                }
             }
         } else {
-            expiryDate = String(expiryDate.prefix(5))
+            DispatchQueue.main.async {
+                self.expiryDate = String(self.expiryDate.prefix(5))
+            }
         }
+        
+        isProcessing = false
     }
     
     func formatCVV(_ input: String) {
+        guard !isProcessing else { return }
+        isProcessing = true
+        
         let filtered = input.filter { $0.isNumber }
-        cvv = String(filtered.prefix(isAmex ? 4 : 3))
+        DispatchQueue.main.async {
+            self.cvv = String(filtered.prefix(self.isAmex ? 4 : 3))
+        }
+        
+        isProcessing = false
     }
     
     func validateCardholderName(_ input: String) -> Bool {
@@ -126,16 +154,40 @@ class AddCardViewModel: ObservableObject {
         showingError = true
     }
     
+    @MainActor
     func addCard() async {
         guard validateCard() else { return }
+        guard !isAddingCard else { return }
+        guard !isProcessing else { return }
         
-        let card = PaymentCard(
-            cardNumber: cardNumber.filter { $0.isNumber },
-            cardholderName: cardholderName,
-            expiryDate: expiryDate,
-            cardType: PaymentCard.detectCardType(from: cardNumber)
-        )
+        isProcessing = true
+        isAddingCard = true
+        cardAddedSuccessfully = false
         
-        await parentViewModel.addCard(card)
+        do {
+            let card = PaymentCard(
+                cardNumber: cardNumber.filter { $0.isNumber },
+                cardholderName: cardholderName,
+                expiryDate: expiryDate,
+                cardType: PaymentCard.detectCardType(from: cardNumber)
+            )
+            
+            try await parentViewModel.addCard(card)
+            try? await Task.sleep(nanoseconds: 500_000_000) 
+            await parentViewModel.loadCards()
+            
+            DispatchQueue.main.async {
+                self.isAddingCard = false
+                self.cardAddedSuccessfully = true
+                self.isProcessing = false
+            }
+        } catch {
+            DispatchQueue.main.async {
+                self.isAddingCard = false
+                self.cardAddedSuccessfully = false
+                self.isProcessing = false
+                self.showError(error.localizedDescription)
+            }
+        }
     }
 } 

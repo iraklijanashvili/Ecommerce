@@ -10,17 +10,22 @@ import FirebaseFirestore
 
 struct CheckoutPaymentView: View {
     @StateObject private var viewModel: CheckoutPaymentViewModel
-    @StateObject private var paymentViewModel = PaymentViewModel()
+    @StateObject private var paymentViewModel: PaymentViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var cardLogos: [String: String] = [:]
     @State private var showAddCard = false
     @State private var showOrderCompleted = false
+    @State private var isNavigatingBack = false
+    @State private var isAddingCard = false
     
     init(productPrice: Double, shippingPrice: Double = 0, productName: String) {
+        let paymentVM = PaymentViewModel()
+        _paymentViewModel = StateObject(wrappedValue: paymentVM)
         _viewModel = StateObject(wrappedValue: CheckoutPaymentViewModel(
             productPrice: productPrice,
             shippingPrice: shippingPrice,
-            productName: productName
+            productName: productName,
+            paymentService: PaymentServiceImpl.shared
         ))
     }
     
@@ -33,6 +38,7 @@ struct CheckoutPaymentView: View {
                     
                     paymentMethodsSection
                         .padding(.horizontal)
+                        .disabled(viewModel.isProcessingOrder)
                     
                     priceBreakdownSection
                         .padding(.horizontal)
@@ -50,21 +56,50 @@ struct CheckoutPaymentView: View {
         }
         .navigationBarHidden(true)
         .onAppear {
-            fetchCardLogos()
-            Task {
-                await viewModel.loadCards()
+            if !isNavigatingBack {
+                fetchCardLogos()
+                Task {
+                    await paymentViewModel.loadCards()
+                    viewModel.cards = paymentViewModel.cards
+                    if !viewModel.cards.isEmpty {
+                        viewModel.selectedPaymentMethod = .creditCard
+                    }
+                }
             }
         }
-        .sheet(isPresented: $showAddCard) {
+        .fullScreenCover(isPresented: $showAddCard) {
             AddCardView(parentViewModel: paymentViewModel)
         }
         .onChange(of: paymentViewModel.cards) { newCards in
-            Task {
-                await viewModel.loadCards()
+            if !isNavigatingBack {
+                viewModel.cards = newCards
+                if !newCards.isEmpty {
+                    viewModel.selectedPaymentMethod = .creditCard
+                    if let lastCard = newCards.last {
+                        viewModel.selectedCard = lastCard
+                    }
+                }
             }
         }
         .fullScreenCover(isPresented: $showOrderCompleted) {
             OrderCompletedView(navigationDelegate: self)
+        }
+        .overlay {
+            if viewModel.isProcessingOrder {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .overlay {
+                        VStack {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(1.5)
+                            
+                            Text("Processing Order...")
+                                .foregroundColor(.white)
+                                .padding(.top)
+                        }
+                    }
+            }
         }
     }
     
@@ -86,11 +121,17 @@ struct CheckoutPaymentView: View {
     
     private var navigationBar: some View {
         HStack {
-            Button(action: { dismiss() }) {
+            Button(action: {
+                isNavigatingBack = true
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    dismiss()
+                }
+            }) {
                 Image(systemName: "chevron.left")
                     .foregroundColor(.primary)
                     .imageScale(.large)
             }
+            .disabled(showAddCard)
             
             Spacer()
             
@@ -236,16 +277,29 @@ struct CheckoutPaymentView: View {
                 }
             }
         }) {
-            Text("Place my order")
-                .font(.headline)
-                .foregroundColor(.white)
+            if viewModel.isProcessingOrder {
+                HStack {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .tint(.white)
+                    Text("Processing...")
+                        .foregroundColor(.white)
+                }
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
-                .background(viewModel.canPlaceOrder ? Color.black : Color.gray)
+                .background(Color.gray)
                 .cornerRadius(25)
+            } else {
+                Text("Place my order")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(viewModel.canPlaceOrder ? Color.black : Color.gray)
+                    .cornerRadius(25)
+            }
         }
-        .disabled(!viewModel.canPlaceOrder)
-        .padding(.top, 8)
+        .disabled(!viewModel.canPlaceOrder || viewModel.isProcessingOrder)
     }
 }
 

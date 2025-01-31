@@ -12,7 +12,7 @@ protocol FirestoreService {
     func fetchBanners() async throws -> [Banner]
     func fetchProducts() async throws -> [Product]
     func fetchCategories() async throws -> [Category]
-    func getProducts(for categoryId: String) async throws -> [Product]
+    func getProducts(for categoryPath: String) async throws -> [Product]
     func getFeaturedProducts(from products: [Product]) -> [Product]
     func getRecommendedProducts(from products: [Product]) -> [Product]
     func getProducts(byIds productIds: [String]) async throws -> [Product]
@@ -61,87 +61,57 @@ class FirestoreServiceImpl: FirestoreService {
         return try await repository.fetchCategories()
     }
     
-    func getProducts(for categoryId: String) async throws -> [Product] {
-        let productsRef = db.collection("products")
-        
-        if ["new_collection", "top_collection", "summer_collection"].contains(categoryId) {
-            print("\n🔍 Fetching collection products for: \(categoryId)")
-            let snapshot = try await productsRef
-                .whereField("types", arrayContains: categoryId)
-                .getDocuments()
+    func getProducts(for categoryPath: String) async throws -> [Product] {
+        if ["new_collection", "top_collection", "summer_collection"].contains(categoryPath.lowercased()) {
+            print("\n🔍 Fetching collection products for: \(categoryPath)")
+            let query = db.collection("products")
+                .whereField("types", arrayContains: categoryPath.lowercased())
             
+            let snapshot = try await query.getDocuments()
             print("\n📝 Query results:")
             print("- Found \(snapshot.documents.count) products")
             
-            let products = try snapshot.documents.map { document in
-                var product = try Firestore.Decoder().decode(Product.self, from: document.data())
-                product.id = document.documentID
-                return product
-            }
-            
+            let products = try snapshot.documents.map { try $0.data(as: Product.self) }
             print("\n✅ Successfully decoded \(products.count) products")
             return products
         }
         
-        let components = categoryId.components(separatedBy: "/")
+        let components = categoryPath.components(separatedBy: "/")
         let mainCategory = components[0].lowercased()
-        let isAllSubcategory = components.count == 2 && components[1].lowercased() == "all"
         
-        print("\n🔍 DEBUG - Category request:")
-        print("- Full categoryId: \(categoryId)")
-        print("- Components: \(components)")
-        print("- Main category: \(mainCategory)")
-        print("- Is 'all' subcategory: \(isAllSubcategory)")
-        
-        if isAllSubcategory {
-            print("\n📦 Fetching ALL products for main category: \(mainCategory)")
+        if components.count > 1 {
+            let subcategory = components[1].lowercased()
+            print("- Subcategory: \(subcategory)")
             
-            let query = productsRef.whereField("mainCategoryId", isEqualTo: mainCategory)
-            print("- Query: mainCategoryId == \(mainCategory)")
-            
-            let snapshot = try await query.getDocuments()
-            print("\n📝 Query results:")
-            print("- Found \(snapshot.documents.count) products")
-            
-            let products = try snapshot.documents.map { document in
-                var product = try Firestore.Decoder().decode(Product.self, from: document.data())
-                product.id = document.documentID
+            if subcategory == "all" {
+                let query = db.collection("products")
+                    .whereField("mainCategoryId", isEqualTo: mainCategory)
                 
-                print("\n📄 Product: \(product.id)")
-                print("- mainCategoryId: \(product.mainCategoryId)")
-                print("- categoryId: \(product.categoryId)")
-                print("- name: \(product.name)")
+                let snapshot = try await query.getDocuments()
+            
+                let products = try snapshot.documents.map { try $0.data(as: Product.self) }
+                return products
+            } else {
                 
-                return product
+                let query = db.collection("products")
+                    .whereField("mainCategoryId", isEqualTo: mainCategory)
+                    .whereField("categoryId", isEqualTo: subcategory)
+                
+                let snapshot = try await query.getDocuments()
+                
+                let products = try snapshot.documents.map { try $0.data(as: Product.self) }
+                print("✅ Successfully decoded \(products.count) products")
+                return products
             }
-            
-            print("\n✅ Successfully decoded \(products.count) products")
-            return products
-            
-        } else {
-            print("\n🔍 Fetching specific subcategory: \(categoryId)")
-            let query = productsRef.whereField("categoryId", isEqualTo: categoryId.lowercased())
-            print("- Query: categoryId == \(categoryId.lowercased())")
-            
-            let snapshot = try await query.getDocuments()
-            print("\n📝 Query results:")
-            print("- Found \(snapshot.documents.count) products")
-            
-            let products = try snapshot.documents.map { document in
-                var product = try Firestore.Decoder().decode(Product.self, from: document.data())
-                product.id = document.documentID
-                
-                print("\n📄 Product: \(product.id)")
-                print("- mainCategoryId: \(product.mainCategoryId)")
-                print("- categoryId: \(product.categoryId)")
-                print("- name: \(product.name)")
-                
-                return product
-            }
-            
-            print("\n✅ Successfully decoded \(products.count) products")
-            return products
         }
+        
+      
+        let query = db.collection("products")
+            .whereField("mainCategoryId", isEqualTo: mainCategory)
+        
+        let snapshot = try await query.getDocuments()
+        let products = try snapshot.documents.map { try $0.data(as: Product.self) }
+        return products
     }
     
     private func getSubcategoryIds(for categoryId: String) -> [String] {

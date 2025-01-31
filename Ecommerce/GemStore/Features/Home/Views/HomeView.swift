@@ -20,67 +20,80 @@ struct HomeView: View {
                 } else if let error = viewModel.error {
                     SharedErrorView(error: error) {
                         Task {
-                            await viewModel.loadData()
+                            await viewModel.loadData(forceReload: true)
                         }
                     }
                 } else {
                     ScrollView(showsIndicators: false) {
-                        VStack(spacing: 20) {
+                        LazyVStack(spacing: 20) {
                             if !viewModel.categories.isEmpty {
                                 HomeCategorySection(categories: viewModel.categories, selectedTab: $selectedTab)
                                     .padding(.top, 65)
                             }
                             
-                            if let topCollectionBanner = viewModel.topCollectionBanner {
-                                Text("Top Collection")
-                                    .font(.headline)
-                                    .foregroundColor(.black)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal)
+                            Group {
+                                if let topCollectionBanner = viewModel.topCollectionBanner {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Top Collection")
+                                            .font(.headline)
+                                            .foregroundColor(.black)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal)
+                                        
+                                        BannerView(banner: topCollectionBanner)
+                                            .frame(height: 200)
+                                            .padding(.horizontal)
+                                    }
+                                }
                                 
-                                BannerView(banner: topCollectionBanner)
-                                    .frame(height: 200)
-                                    .padding(.horizontal)
-                            }
-                            
-                            if !viewModel.featuredProducts.isEmpty {
-                                ProductSection(
-                                    title: "Featured Products",
-                                    products: viewModel.featuredProducts,
-                                    style: .featured
-                                )
-                            }
-                            
-                            if let newCollectionBanner = viewModel.newCollectionBanner {
-                                Text("New Collection")
-                                    .font(.headline)
-                                    .foregroundColor(.black)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal)
+                                if !viewModel.featuredProducts.isEmpty {
+                                    ProductSection(
+                                        title: "Featured Products",
+                                        products: viewModel.featuredProducts,
+                                        style: .featured
+                                    )
+                                }
                                 
-                                BannerView(banner: newCollectionBanner)
-                                    .padding(.horizontal)
-                            }
-                            
-                            if !viewModel.recommendedProducts.isEmpty {
-                                ProductSection(
-                                    title: "Recommended",
-                                    products: viewModel.recommendedProducts,
-                                    style: .compact
-                                )
-                            }
-                            
-                            if let summerCollectionBanner = viewModel.summerCollectionBanner {
-                                Text("Summer Collection")
-                                    .font(.headline)
-                                    .foregroundColor(.black)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal)
+                                if let newCollectionBanner = viewModel.newCollectionBanner {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("New Collection")
+                                            .font(.headline)
+                                            .foregroundColor(.black)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal)
+                                        
+                                        BannerView(banner: newCollectionBanner)
+                                            .frame(height: 200)
+                                            .padding(.horizontal)
+                                    }
+                                }
                                 
-                                BannerView(banner: summerCollectionBanner)
-                                    .padding(.horizontal)
+                                if !viewModel.recommendedProducts.isEmpty {
+                                    ProductSection(
+                                        title: "Recommended",
+                                        products: viewModel.recommendedProducts,
+                                        style: .compact
+                                    )
+                                }
+                                
+                                if let summerCollectionBanner = viewModel.summerCollectionBanner {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Summer Collection")
+                                            .font(.headline)
+                                            .foregroundColor(.black)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.horizontal)
+                                        
+                                        BannerView(banner: summerCollectionBanner)
+                                            .frame(height: 200)
+                                            .padding(.horizontal)
+                                    }
+                                }
                             }
                         }
+                    }
+                    .refreshable {
+                        await viewModel.loadData(forceReload: true)
                     }
                 }
                 
@@ -97,6 +110,9 @@ struct HomeView: View {
             }
         }
         .navigationBarHidden(true)
+        .task {
+            await viewModel.loadData()
+        }
     }
 }
 

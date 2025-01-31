@@ -10,6 +10,8 @@ import SwiftUI
 
 struct BannerView: View {
     let banner: Banner
+    @State private var shouldReload = false
+    @State private var imageLoadingFailed = false
     
     var body: some View {
         NavigationLink(destination: destinationView) {
@@ -22,16 +24,34 @@ struct BannerView: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .onAppear {
+                                imageLoadingFailed = false
+                            }
                     case .failure(_):
                         Color.gray
                             .overlay(
-                                Image(systemName: "photo")
-                                    .foregroundColor(.white)
+                                VStack {
+                                    Image(systemName: "photo")
+                                        .foregroundColor(.white)
+                                    if imageLoadingFailed {
+                                        Button(action: {
+                                            shouldReload.toggle()
+                                        }) {
+                                            Image(systemName: "arrow.clockwise")
+                                                .foregroundColor(.white)
+                                                .padding(8)
+                                        }
+                                    }
+                                }
                             )
+                            .onAppear {
+                                imageLoadingFailed = true
+                            }
                     @unknown default:
                         EmptyView()
                     }
                 }
+                .id(shouldReload)
                 .frame(width: geometry.size.width, height: 200)
                 .overlay(
                     BannerTitleOverlay(banner: banner),
@@ -40,6 +60,11 @@ struct BannerView: View {
             }
             .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .onAppear {
+            if imageLoadingFailed {
+                shouldReload.toggle()
+            }
         }
     }
     

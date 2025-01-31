@@ -35,7 +35,9 @@ struct ProductSection: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .top, spacing: 16) {
                     ForEach(products) { product in
-                        NavigationLink(destination: SharedProductDetailView(product: product, isFromHomePage: true)) {
+                        NavigationLink {
+                            SharedProductDetailView(product: product, isFromHomePage: true)
+                        } label: {
                             switch style {
                             case .regular:
                                 RegularProductCard(product: product)
