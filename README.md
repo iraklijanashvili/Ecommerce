@@ -62,7 +62,8 @@ git clone https://github.com/iraklijanashvili/Ecommerce.git
 
 2. Navigate to the project directory
 ```bash
-cd GemStore
+cd Ecommerce
+
 ```
 
 3. Install dependencies (if using CocoaPods)
